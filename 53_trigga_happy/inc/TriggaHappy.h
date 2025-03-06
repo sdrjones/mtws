@@ -19,7 +19,7 @@ private:
     void ReadKnobs(void);
     void ReadInputs(void);
 
-    static const uint32_t kMaxGrains = 1;
+    static const uint32_t kMaxGrains = 3;
     static constexpr uint32_t kMaxGrainSize = 24000;
     static constexpr uint32_t kMinGrainSize = 2048;
     static constexpr uint32_t kMaxUnsigned = 4095;

@@ -4,7 +4,15 @@
 #include "NotchFilter.h"
 #include "Utils.h"
 #include "HannWindow.h"
+#include "PowerPan.h"
 
+
+uint32_t __not_in_flash_func(rnd8)()
+{
+	static uint32_t lcg_seed = 1;
+	lcg_seed = 1664525 * lcg_seed + 1013904223;
+	return lcg_seed >> 24;
+}
 
 uint32_t __not_in_flash_func(rnd12)()
 {
@@ -70,10 +78,12 @@ void TriggaHappy::ProcessSample()
 
         audioM = notchFilter.ProcessSample(audioM);
 
-
+        int16_t maxWet= 0;
 
         int16_t wetL = 0;
         int16_t wetR = 0;
+
+        int16_t maxLev = 4096;
 
         for (unsigned int g = 0; g < kMaxGrains; ++g)
         {
@@ -86,10 +96,21 @@ void TriggaHappy::ProcessSample()
                 //grain.sizeSamples = static_cast<unsigned int>((0.01f + static_cast<float>(rand()) / RAND_MAX 0.49f) context->audioSampleRate);
                 grain.sizeSamples = (rand() % (kMaxGrainSize - kMinGrainSize)) + kMinGrainSize;
                 grain.currentIndex = 0;
-                grain.pan = rnd12();
+                grain.pan = rnd8();
                 uint32_t fullLevel = rnd12();
 
-                grain.level = (fullLevel >> 1) + 2048;
+
+                //grain.level = (fullLevel >> 1) + 2048;
+                grain.level = fullLevel >> 1;
+                if (grain.level > maxLev)
+                {
+                    grain.level = maxLev;
+                    maxLev = 0;
+                }
+                else
+                {
+                    maxLev -= grain.level;
+                }
                 //grain.level = 4095;
             }
             
@@ -116,13 +137,14 @@ void TriggaHappy::ProcessSample()
             }
             
 
-            wetL += static_cast<int16_t>(grainSample * grain.pan >> 11);
-            wetR += static_cast<int16_t>(grainSample * (4095 - grain.pan) >> 11);
+            wetL += static_cast<int16_t>(grainSample * kLeftGains[grain.pan] >> 12);
+            wetR += static_cast<int16_t>(grainSample * kRightGains[grain.pan] >> 12);
  
 
             grain.currentIndex++;
         }
 
+        
         int16_t mixOutL = (audioL * (mainKnob) >> 12) + (wetL * (4095 - (mainKnob)) >> 12);
         int16_t mixOutR = (audioR * (mainKnob) >> 12) + (wetR * (4095 - (mainKnob)) >> 12);
 
