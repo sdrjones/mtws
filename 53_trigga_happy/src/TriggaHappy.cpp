@@ -40,6 +40,15 @@ int32_t __not_in_flash_func(rndi32)()
 	return lcg_seed;
 }
 
+
+uint32_t __not_in_flash_func(distance_in_circular_buffer)(uint32_t a, uint32_t b, uint32_t buffer_size) {
+    if (a <= b) {
+        return b - a;
+    } else {
+        return buffer_size - a + b;
+    }
+}
+
 TriggaHappy::TriggaHappy() : notchFilter(NotchFilter::Q100)
 {
     clearBuffers();
@@ -52,6 +61,10 @@ TriggaHappy::TriggaHappy() : notchFilter(NotchFilter::Q100)
         grains[g].currentIndex = 0;
         grains[g].sizeSamples = kMaxGrainSize;
         grains[g].startIndex = rand() % kBufSize;
+        grains[g].level = 0;
+        grains[g].pan = 128;
+        grains[g].pitch = Normal;
+        grains[g].subIndex = 0;
     }
 }
 
@@ -83,7 +96,7 @@ void TriggaHappy::ProcessSample()
         int16_t wetL = 0;
         int16_t wetR = 0;
 
-        int16_t maxLev = 4096;
+
 
         for (unsigned int g = 0; g < kMaxGrains; ++g)
         {
@@ -92,24 +105,54 @@ void TriggaHappy::ProcessSample()
             // Randomize grain start position and size if the grain has finished
             if (grain.currentIndex >= grain.sizeSamples)
             {
+                headRoom += grain.level;
+
+                if (headRoom > 4096)
+                {
+                    headRoom = 4096;
+                }
                 grain.startIndex = rand() % kBufSize;
                 //grain.sizeSamples = static_cast<unsigned int>((0.01f + static_cast<float>(rand()) / RAND_MAX 0.49f) context->audioSampleRate);
-                grain.sizeSamples = (rand() % (kMaxGrainSize - kMinGrainSize)) + kMinGrainSize;
+                uint16_t maxSize = kMaxGrainSize * yKnob >> 12;
+                if (maxSize < kMinGrainSize)
+                {
+                    maxSize = kMinGrainSize;
+                }
+                grain.sizeSamples = (rand() % (maxSize - kMinGrainSize)) + kMinGrainSize;
                 grain.currentIndex = 0;
                 grain.pan = rnd8();
                 uint32_t fullLevel = rnd12();
+                uint32_t pitchRand = rnd12();
 
+                grain.subIndex = 0;
+                uint16_t distBehind = distance_in_circular_buffer(grain.startIndex,writeI, kBufSize);
+                uint16_t distAhead = kBufSize - distBehind;
 
-                //grain.level = (fullLevel >> 1) + 2048;
-                grain.level = fullLevel >> 1;
-                if (grain.level > maxLev)
+                if ((pitchRand < (xKnob >> 1)) && ((distBehind >> 1) > grain.sizeSamples))
                 {
-                    grain.level = maxLev;
-                    maxLev = 0;
+                    grain.pitch = OctaveHigh;
+                }
+                else if ((pitchRand < (xKnob)) && ((distAhead >> 1) > grain.sizeSamples))
+                {
+                    grain.pitch = OctaveLow;
+                    grain.subIndex = 1;
                 }
                 else
                 {
-                    maxLev -= grain.level;
+                    grain.pitch = Normal;
+                }
+
+
+                //grain.level = (fullLevel >> 1) + 2048;
+                grain.level = fullLevel;
+                if (grain.level > headRoom)
+                {
+                    grain.level = headRoom;
+                    headRoom = 0;
+                }
+                else
+                {
+                    headRoom -= grain.level;
                 }
                 //grain.level = 4095;
             }
@@ -141,7 +184,21 @@ void TriggaHappy::ProcessSample()
             wetR += static_cast<int16_t>(grainSample * kRightGains[grain.pan] >> 12);
  
 
-            grain.currentIndex++;
+            if (grain.pitch == OctaveLow)
+            {
+                grain.subIndex = !grain.subIndex;
+            }
+
+            if (grain.subIndex == 0)
+            {
+                grain.currentIndex++;
+
+                if (grain.pitch == OctaveHigh)
+                {
+                    grain.currentIndex++;
+                }
+            }
+            
         }
 
         
@@ -226,8 +283,8 @@ void TriggaHappy::ReadKnobs(void)
 {
     // Virtual detent the knob values
     mainKnob = virtualDetentedKnob(KnobVal(Knob::Main));
-    x = virtualDetentedKnob(KnobVal(Knob::X));
-    y = virtualDetentedKnob(KnobVal(Knob::Y));
+    xKnob = virtualDetentedKnob(KnobVal(Knob::X));
+    yKnob = virtualDetentedKnob(KnobVal(Knob::Y));
 }
 
 void TriggaHappy::ReadInputs(void)

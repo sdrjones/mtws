@@ -26,7 +26,12 @@ private:
     static constexpr uint32_t kMaxSigned = 2047;
     
     
-    
+    enum Pitch
+    {
+        OctaveHigh,
+        Normal,
+        OctaveLow
+    };
     
     struct Grain
     {
@@ -35,6 +40,9 @@ private:
         unsigned int currentIndex;
         unsigned int pan;
         unsigned int level;
+        Pitch pitch;
+        unsigned int subIndex;
+
     };
 
     static constexpr uint32_t kBufSize = 2 * 48000;
@@ -44,6 +52,7 @@ private:
     Grain grains[kMaxGrains];
     bool halftime = false;
     uint32_t startupCounter = 400;
+    uint16_t headRoom = 4096;
 
     Switch lastSwitch;
 
@@ -51,8 +60,8 @@ private:
     NotchFilter notchFilter;
 
     // ui elements
-    int x;
-    int y;
+    int xKnob;
+    int yKnob;
     int mainKnob;
 
     // inputs
