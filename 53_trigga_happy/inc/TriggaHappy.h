@@ -32,6 +32,14 @@ private:
         Normal,
         OctaveLow
     };
+
+    enum RecordState
+    {
+        RecordStateOn,
+        RecordStateEnteringOn,
+        RecordStateOff,
+        RecordStateEnteringOff
+    };
     
     struct Grain
     {
@@ -49,12 +57,15 @@ private:
     int16_t audioBuf[kBufSize];
     
     uint32_t writeI = 0;
+    uint32_t readI = 2000;
     Grain grains[kMaxGrains];
     bool halftime = false;
     uint32_t startupCounter = 400;
     uint16_t headRoom = 4096;
 
     Switch lastSwitch;
+    enum RecordState recordState = RecordStateOff;
+    uint16_t recordStateHannIndex = 0;
 
     // Notch Filter
     NotchFilter notchFilter;

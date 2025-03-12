@@ -201,69 +201,97 @@ void TriggaHappy::ProcessSample()
             
         }
 
-        
-        int16_t mixOutL = (audioL * (mainKnob) >> 12) + (wetL * (4095 - (mainKnob)) >> 12);
-        int16_t mixOutR = (audioR * (mainKnob) >> 12) + (wetR * (4095 - (mainKnob)) >> 12);
+        // audio buffer record debug
+        //wetL = audioBuf[readI];
+
+        // Right shift dry signal volume by more in order to match the perceived
+        // level of the wet signal
+        int16_t mixOutL = (audioL * (mainKnob) >> 13) + (wetL * (4095 - (mainKnob)) >> 12);
+        int16_t mixOutR = (audioR * (mainKnob) >> 13) + (wetR * (4095 - (mainKnob)) >> 12);
 
 
+        bool shouldRecord = false;
 
-        if (s != Switch::Up)
+        // Currently Middle is don't record,
+        // either up or down is record
+        if (s != Switch::Middle)
         {
-            audioBuf[writeI] = audioM;
+            shouldRecord = true;
         }
+
+
+        switch  (recordState)
+        {
+            case RecordStateOn:
+                audioBuf[writeI] = audioM;
+                if (!shouldRecord)
+                {
+                    recordState = RecordStateEnteringOff;
+                }
+            break;
+
+            case RecordStateEnteringOn:
+            {
+                
+                uint32_t fadedIn = audioM * kHannWindowFirstHalf[recordStateHannIndex];
+                uint32_t fadedBuf = audioBuf[writeI] * (kHannWindowFirstHalf[kHalfHannSize - recordStateHannIndex]);
+
+                uint32_t fadedSum = (fadedIn + fadedBuf);
+                
+                audioBuf[writeI] = static_cast<uint16_t>(fadedSum >> 15);
+                recordStateHannIndex++;
+                if (!shouldRecord)
+                {
+                    recordState = RecordStateEnteringOff;
+                }
+                else if (recordStateHannIndex >= kHalfHannSize)
+                {
+                    recordState = RecordStateOn;
+                }
+            }
+            break;
+
+            case RecordStateEnteringOff:
+            {
+                uint32_t fadedIn = audioM * kHannWindowFirstHalf[recordStateHannIndex];
+                uint32_t fadedBuf = audioBuf[writeI] * (kHannWindowFirstHalf[kHalfHannSize - recordStateHannIndex]);
+
+                uint32_t fadedSum = (fadedIn + fadedBuf);
+                
+                audioBuf[writeI] = static_cast<uint16_t>(fadedSum >> 15);
+                recordStateHannIndex--;
+                if (shouldRecord)
+                {
+                    recordState = RecordStateEnteringOn;
+                }
+                else if (recordStateHannIndex == 0)
+                {
+                    recordState = RecordStateOff;
+                }
+            }
+            break;
+
+            case RecordStateOff:
+                if (shouldRecord)
+                {
+                    recordState = RecordStateEnteringOn;
+                }
+
+            default:
+            break;
+        }
+
+        lastSwitch = s;
+
+
         
         writeI = (writeI + 1) % kBufSize;
+        readI = (readI + 1) % kBufSize;
 
         AudioOut1(mixOutL);
         AudioOut2(mixOutR);
     
     }
-    //     // do stuff
-    //     ReadKnobs();
-
-    //     // Read Switch
-    //     Switch s = SwitchVal();
-        
-
-
-    //     ReadInputs();
-    //     audioL = notchFilter.ProcessSample(audioL);
-    //     AudioOut1(audioL);
-    //     int16_t wet = 0;
-
-    //     for (unsigned int g = 0; g < kMaxGrains; ++g)
-    //     {
-    //         Grain &grain = grains[g];
-
-    //         // Randomize grain start position and size if the grain has finished
-    //         if (grain.currentIndex >= grain.sizeSamples)
-    //         {
-    //             grain.startIndex = rand() % kBufSize;
-    //             //grain.sizeSamples = static_cast<unsigned int>((0.01f + static_cast<float>(rand()) / RAND_MAX 0.49f) context->audioSampleRate);
-    //             grain.sizeSamples = kMaxGrainSize;
-    //             grain.currentIndex = 0;
-    //         }
-            
-    //         // Linear interpolation for reading from the delay buffer
-    //         unsigned int readIndex1 = (grain.startIndex + grain.currentIndex) % kBufSize;
-    //         int16_t grainSample = audioBuf[readIndex1];
-
-    //         // Apply Hann window to the grain using the wavetable
-    //         //int16_t windowValue = kHannWindow[static_cast<unsigned int>(static_cast<float>(grain.currentIndex) / grain.sizeSamples * (kMaxGrainSize - 1))];
-    //         //grainSample *= windowValue;
-
-    //         wet += grainSample;
-
-    //         grain.currentIndex++;
-
-
-    //         audioBuf[writeI] = audioL;
-    //         int16_t outSample = wet + audioL;
-    //         AudioOut(0, audioL);
-    //         AudioOut(1, outSample);
-    //         writeI = (writeI + 1) % kBufSize;
-    //     }
-    // }
 }
 
 void TriggaHappy::clearBuffers(void)
