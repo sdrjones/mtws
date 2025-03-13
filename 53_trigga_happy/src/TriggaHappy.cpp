@@ -216,6 +216,11 @@ void TriggaHappy::ProcessSample()
                     grain.currentIndex++;
                 }
             }
+
+            if ( g < 6)
+            {
+                LedBrightness(g,grainSample);
+            }
             
         }
 

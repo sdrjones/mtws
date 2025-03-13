@@ -18,7 +18,8 @@ public:
     NotchFilter(NotchQ q);
 
     // process sample x0, return y0
-    int32_t ProcessSample(int32_t x0);
+    //int32_t ProcessSample(int32_t x0);
+    int32_t __not_in_flash_func(ProcessSample)(int32_t x0);
 
 private:
     // state
