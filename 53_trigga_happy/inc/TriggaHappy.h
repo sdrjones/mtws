@@ -10,7 +10,8 @@ class TriggaHappy : public ComputerCard
 {
 public:
     TriggaHappy();
-    virtual void ProcessSample();
+    //virtual void ProcessSample();
+	void __not_in_flash_func(ProcessSample)();
 
 private:
     // private methods
@@ -19,7 +20,7 @@ private:
     void ReadKnobs(void);
     void ReadInputs(void);
 
-    static const uint32_t kMaxGrains = 6;
+    static const uint32_t kMaxGrains = 5;
     static constexpr uint32_t kMaxGrainSize = 24000;
     static constexpr uint32_t kMinGrainSize = 2048;
     static constexpr uint32_t kMaxUnsigned = 4095;

@@ -87,7 +87,15 @@ void TriggaHappy::ProcessSample()
         Switch s = SwitchVal();
         ReadInputs();
 
-        int16_t audioM = (audioL + audioR) >> 1;
+        uint16_t inputShift = 0;
+
+        if (Connected(Input::Audio1) && Connected(Input::Audio2))
+        {
+          inputShift = 1;
+        }
+        
+        int16_t audioM = (audioL + audioR) >> inputShift;
+        
 
         audioM = notchFilter.ProcessSample(audioM);
 
@@ -123,6 +131,10 @@ void TriggaHappy::ProcessSample()
                 grain.sizeSamples = (rndi32() % (maxSize - kMinGrainSize)) + kMinGrainSize;
                 grain.currentIndex = 0;
                 grain.pan = rnd8(); // pan indexes the power pan array that has 256 entries
+                if (grain.pan > 255)
+                {
+                    grain.pan = 255;
+                }
                 uint32_t rndLevel = rnd12();
                 uint32_t pitchRand = rnd12();
 
@@ -187,7 +199,7 @@ void TriggaHappy::ProcessSample()
             
             // Pan the grain into wet left and right signals
             wetL += static_cast<int16_t>(grainSample * kLeftGains[grain.pan] >> 12);
-            wetR += static_cast<int16_t>(grainSample * kRightGains[grain.pan] >> 12);
+            wetR += static_cast<int16_t>(grainSample * kLeftGains[255 - grain.pan] >> 12);
  
             // Use grain sub index if necessary to pitch shift
             if (grain.pitch == OctaveLow)
