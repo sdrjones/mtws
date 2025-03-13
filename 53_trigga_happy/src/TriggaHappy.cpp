@@ -105,6 +105,8 @@ void TriggaHappy::ProcessSample()
             // Randomize grain start position and size if the grain has finished
             if (grain.currentIndex >= grain.sizeSamples)
             {
+                // When the grain has finished then we add it's old level back to
+                // the headRoom
                 headRoom += grain.level;
 
                 if (headRoom > 4096)
@@ -113,19 +115,22 @@ void TriggaHappy::ProcessSample()
                 }
                 grain.startIndex = rand() % kBufSize;
                 //grain.sizeSamples = static_cast<unsigned int>((0.01f + static_cast<float>(rand()) / RAND_MAX 0.49f) context->audioSampleRate);
-                uint16_t maxSize = kMaxGrainSize * yKnob >> 12;
+                uint32_t maxSize = (kMaxGrainSize * yKnob) >> 12;
                 if (maxSize < kMinGrainSize)
                 {
                     maxSize = kMinGrainSize;
                 }
-                grain.sizeSamples = (rand() % (maxSize - kMinGrainSize)) + kMinGrainSize;
+                grain.sizeSamples = (rndi32() % (maxSize - kMinGrainSize)) + kMinGrainSize;
                 grain.currentIndex = 0;
-                grain.pan = rnd8();
-                uint32_t fullLevel = rnd12();
+                grain.pan = rnd8(); // pan indexes the power pan array that has 256 entries
+                uint32_t rndLevel = rnd12();
                 uint32_t pitchRand = rnd12();
 
                 grain.subIndex = 0;
-                uint16_t distBehind = distance_in_circular_buffer(grain.startIndex,writeI, kBufSize);
+
+                // Calculate the distance from the write pointer to figure out if we can play the grain
+                // at a different rate from the rate at which we are writing to audioBuf
+                uint16_t distBehind = distance_in_circular_buffer(grain.startIndex, writeI, kBufSize);
                 uint16_t distAhead = kBufSize - distBehind;
 
                 if ((pitchRand < (xKnob >> 1)) && ((distBehind >> 1) > grain.sizeSamples))
@@ -141,10 +146,11 @@ void TriggaHappy::ProcessSample()
                 {
                     grain.pitch = Normal;
                 }
+  
+                // Set the level to the random level
+                grain.level = rndLevel;
 
-
-                //grain.level = (fullLevel >> 1) + 2048;
-                grain.level = fullLevel;
+                // Check there is enough headroom to take that level
                 if (grain.level > headRoom)
                 {
                     grain.level = headRoom;
@@ -152,23 +158,23 @@ void TriggaHappy::ProcessSample()
                 }
                 else
                 {
+                    // Remove the level from the headroom
                     headRoom -= grain.level;
                 }
-                //grain.level = 4095;
             }
             
-            // Linear interpolation for reading from the delay buffer
-            unsigned int readIndex1 = (grain.startIndex + grain.currentIndex) % kBufSize;
-            int16_t grainSample = audioBuf[readIndex1];
+            unsigned int grainReadIndex = (grain.startIndex + grain.currentIndex) % kBufSize;
+            int16_t grainSample = audioBuf[grainReadIndex];
 
             // Apply level
             grainSample = static_cast<uint16_t>((grainSample * grain.level) >> 12);
 
-            // Apply Hann window to the grain using the wavetable
-            //int16_t windowValue = kHannWindow[static_cast<unsigned int>(static_cast<float>(grain.currentIndex) / grain.sizeSamples * (kMaxGrainSize - 1))];
-            //grainSample *= windowValue;
-
-            int16_t hannIndex = grain.currentIndex;
+            // If we're near the start of end of the grain then we fade in/out
+            // using a Hann window lookup table
+            // As the hann window is symmetrical I'm using half of one to save
+            // on space
+            
+            int16_t hannIndex = grain.currentIndex; 
             if (hannIndex > kHalfHannSize)
             {
                 hannIndex = grain.sizeSamples - hannIndex;
@@ -179,11 +185,11 @@ void TriggaHappy::ProcessSample()
                 grainSample = static_cast<uint16_t>(faded32 >> 15);
             }
             
-
+            // Pan the grain into wet left and right signals
             wetL += static_cast<int16_t>(grainSample * kLeftGains[grain.pan] >> 12);
             wetR += static_cast<int16_t>(grainSample * kRightGains[grain.pan] >> 12);
  
-
+            // Use grain sub index if necessary to pitch shift
             if (grain.pitch == OctaveLow)
             {
                 grain.subIndex = !grain.subIndex;
@@ -202,6 +208,8 @@ void TriggaHappy::ProcessSample()
         }
 
         // audio buffer record debug
+        // this "debug" signal sounds nice when mixed in with the granulated
+        // playback so maybe worth mixing this into tehe output somehow?
         //wetL = audioBuf[readI];
 
         // Right shift dry signal volume by more in order to match the perceived
@@ -219,7 +227,10 @@ void TriggaHappy::ProcessSample()
             shouldRecord = true;
         }
 
-
+        // The record state machine aims to crossfade between the buffer and
+        // live input when starting/stopping recording so as not to
+        // get a glitch
+        // I'm using the  hann
         switch  (recordState)
         {
             case RecordStateOn:
@@ -236,6 +247,8 @@ void TriggaHappy::ProcessSample()
                 uint32_t fadedIn = audioM * kHannWindowFirstHalf[recordStateHannIndex];
                 uint32_t fadedBuf = audioBuf[writeI] * (kHannWindowFirstHalf[kHalfHannSize - recordStateHannIndex]);
 
+                // Because this is a crossfade there is no need to right shift the
+                // sum result
                 uint32_t fadedSum = (fadedIn + fadedBuf);
                 
                 audioBuf[writeI] = static_cast<uint16_t>(fadedSum >> 15);

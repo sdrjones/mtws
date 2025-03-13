@@ -61,7 +61,7 @@ private:
     Grain grains[kMaxGrains];
     bool halftime = false;
     uint32_t startupCounter = 400;
-    uint16_t headRoom = 4096;
+    uint16_t headRoom = 4096; // The "level" available for all grains
 
     Switch lastSwitch;
     enum RecordState recordState = RecordStateOff;
