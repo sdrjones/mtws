@@ -21,10 +21,12 @@ private:
     void ReadInputs(void);
 
     static const uint32_t kMaxGrains = 6;
-    static constexpr uint32_t kMaxGrainSize = 24000;
+    static constexpr uint32_t kMaxGrainSize = 48000;
     static constexpr uint32_t kMinGrainSize = 2048;
     static constexpr uint32_t kMaxUnsigned = 4095;
     static constexpr uint32_t kMaxSigned = 2047;
+    static constexpr uint32_t kGrainSilenceThreshold = 16;
+    
     
     
     enum Pitch
@@ -57,8 +59,8 @@ private:
     static constexpr uint32_t kBufSize = 2 * 48000;
     int16_t audioBuf[kBufSize];
     
-    uint32_t writeI = 0;
-    uint32_t readI = 2000;
+    uint32_t writeI = 1;
+    uint32_t readI = 0;
     Grain grains[kMaxGrains];
     bool halftime = false;
     uint32_t startupCounter = 400;

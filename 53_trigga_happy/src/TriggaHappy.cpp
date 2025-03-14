@@ -162,6 +162,11 @@ void TriggaHappy::ProcessSample()
                 // Set the level to the random level
                 grain.level = rndLevel;
 
+                if (grain.level < kGrainSilenceThreshold)
+                {
+                    grain.level = 0;
+                }
+
                 // Check there is enough headroom to take that level
                 if (grain.level > headRoom)
                 {
@@ -175,32 +180,36 @@ void TriggaHappy::ProcessSample()
                 }
             }
             
-            unsigned int grainReadIndex = (grain.startIndex + grain.currentIndex) % kBufSize;
-            int16_t grainSample = audioBuf[grainReadIndex];
-
-            // Apply level
-            grainSample = static_cast<uint16_t>((grainSample * grain.level) >> 12);
-
-            // If we're near the start of end of the grain then we fade in/out
-            // using a Hann window lookup table
-            // As the hann window is symmetrical I'm using half of one to save
-            // on space
-            
-            int16_t hannIndex = grain.currentIndex; 
-            if (hannIndex > kHalfHannSize)
+            // Save some processing if the grain is silent
+            int16_t grainSample = 0;
+            if (grain.level > 0)
             {
-                hannIndex = grain.sizeSamples - hannIndex;
+                unsigned int grainReadIndex = (grain.startIndex + grain.currentIndex) % kBufSize;
+                grainSample = audioBuf[grainReadIndex];
+
+                // Apply level
+                grainSample = static_cast<uint16_t>((grainSample * grain.level) >> 12);
+
+                // If we're near the start of end of the grain then we fade in/out
+                // using a Hann window lookup table
+                // As the hann window is symmetrical I'm using half of one to save
+                // on space
+                
+                uint32_t hannIndex = grain.currentIndex; 
+                if (hannIndex > kHalfHannSize)
+                {
+                    hannIndex = grain.sizeSamples - hannIndex;
+                }
+                if (hannIndex < kHalfHannSize)
+                {
+                    uint32_t faded32 = grainSample * kHannWindowFirstHalf[hannIndex];
+                    grainSample = static_cast<uint16_t>(faded32 >> 15);
+                }
+                
+                // Pan the grain into wet left and right signals
+                wetL += static_cast<int16_t>(grainSample * kLeftGains[grain.pan] >> 12);
+                wetR += static_cast<int16_t>(grainSample * kLeftGains[255 - grain.pan] >> 12);
             }
-            if (hannIndex < kHalfHannSize)
-            {
-                uint32_t faded32 = grainSample * kHannWindowFirstHalf[hannIndex];
-                grainSample = static_cast<uint16_t>(faded32 >> 15);
-            }
-            
-            // Pan the grain into wet left and right signals
-            wetL += static_cast<int16_t>(grainSample * kLeftGains[grain.pan] >> 12);
-            wetR += static_cast<int16_t>(grainSample * kLeftGains[255 - grain.pan] >> 12);
- 
             // Use grain sub index if necessary to pitch shift
             if (grain.pitch == OctaveLow)
             {
@@ -231,8 +240,21 @@ void TriggaHappy::ProcessSample()
 
         // Right shift dry signal volume by more in order to match the perceived
         // level of the wet signal
-        int16_t mixOutL = (audioL * (mainKnob) >> 13) + (wetL * (4095 - (mainKnob)) >> 12);
-        int16_t mixOutR = (audioR * (mainKnob) >> 13) + (wetR * (4095 - (mainKnob)) >> 12);
+
+        int16_t dryL = 0;
+        int16_t dryR = 0;
+        
+        // dryL = audioL;
+        // dryR = audioR;
+        
+        //if (s!= Switch::Up)
+        //{
+            dryL = dryR = audioBuf[readI];
+        //}
+        
+
+        int16_t mixOutL = (dryL * (mainKnob) >> 13) + (wetL * (4095 - (mainKnob)) >> 12);
+        int16_t mixOutR = (dryR * (mainKnob) >> 13) + (wetR * (4095 - (mainKnob)) >> 12);
 
 
         bool shouldRecord = false;
@@ -334,7 +356,8 @@ void TriggaHappy::clearBuffers(void)
 
 void TriggaHappy::resetPointers(void)
 {
-    writeI = 0;
+    writeI = 1;
+    readI = 0;
 }
 
 void TriggaHappy::ReadKnobs(void)
