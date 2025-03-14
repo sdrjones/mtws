@@ -219,7 +219,7 @@ void TriggaHappy::ProcessSample()
 
             if ( g < 6)
             {
-                LedBrightness(g,grainSample);
+                LedBrightness(g,abs(grainSample) << 2);
             }
             
         }
