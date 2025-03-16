@@ -17,12 +17,15 @@ private:
     void clearBuffers(void);
     void resetPointers(void);
     void ReadKnobs(void);
-    void ReadInputs(void);
+    void ReadAudio(void);
+    void ReadCV(void);
+    
 
     static constexpr uint32_t kBufSize = 2 * 48000;
-    static const uint32_t kMaxGrains = 4;
+    static const uint32_t kMaxGrains = 6;
     static constexpr uint32_t kMaxGrainSize = kBufSize; //48000;
     static constexpr uint32_t kMinGrainSize = 2048;
+    static constexpr uint32_t kMinSleepSize = 24000;
     static constexpr uint32_t kMaxUnsigned = 4095;
     static constexpr uint32_t kMaxSigned = 2047;
     static constexpr uint32_t kGrainSilenceThreshold = 16;
