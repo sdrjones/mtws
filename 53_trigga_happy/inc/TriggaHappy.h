@@ -10,8 +10,7 @@ class TriggaHappy : public ComputerCard
 {
 public:
     TriggaHappy();
-    //virtual void ProcessSample();
-	void __not_in_flash_func(ProcessSample)();
+    void __not_in_flash_func(ProcessSample)();
 
 private:
     // private methods
@@ -20,8 +19,9 @@ private:
     void ReadKnobs(void);
     void ReadInputs(void);
 
-    static const uint32_t kMaxGrains = 6;
-    static constexpr uint32_t kMaxGrainSize = 48000;
+    static constexpr uint32_t kBufSize = 2 * 48000;
+    static const uint32_t kMaxGrains = 4;
+    static constexpr uint32_t kMaxGrainSize = kBufSize; //48000;
     static constexpr uint32_t kMinGrainSize = 2048;
     static constexpr uint32_t kMaxUnsigned = 4095;
     static constexpr uint32_t kMaxSigned = 2047;
@@ -53,10 +53,10 @@ private:
         unsigned int level;
         Pitch pitch;
         unsigned int subIndex;
-
+        unsigned int sleepCounter;
     };
 
-    static constexpr uint32_t kBufSize = 2 * 48000;
+
     int16_t audioBuf[kBufSize];
     
     uint32_t writeI = 1;
@@ -65,6 +65,7 @@ private:
     bool halftime = false;
     uint32_t startupCounter = 400;
     uint16_t headRoom = 4096; // The "level" available for all grains
+    uint32_t sleepChance = 1000; // out of 4096
 
     Switch lastSwitch;
     enum RecordState recordState = RecordStateOff;

@@ -65,6 +65,7 @@ TriggaHappy::TriggaHappy() : notchFilter(NotchFilter::Q100)
         grains[g].pan = 128;
         grains[g].pitch = Normal;
         grains[g].subIndex = 0;
+        grains[g].sleepCounter = 0;
     }
 }
 
@@ -110,25 +111,39 @@ void TriggaHappy::ProcessSample()
         {
             Grain &grain = grains[g];
 
+            if (grain.sleepCounter > 0)
+            {
+                grain.sleepCounter--;
+                continue;
+            }
+
             // Randomize grain start position and size if the grain has finished
             if (grain.currentIndex >= grain.sizeSamples)
             {
-                // When the grain has finished then we add it's old level back to
-                // the headRoom
-                headRoom += grain.level;
 
-                if (headRoom > 4096)
-                {
-                    headRoom = 4096;
-                }
-                grain.startIndex = rand() % kBufSize;
-                //grain.sizeSamples = static_cast<unsigned int>((0.01f + static_cast<float>(rand()) / RAND_MAX 0.49f) context->audioSampleRate);
+                uint16_t sleepRand = rnd12();
                 uint32_t maxSize = (kMaxGrainSize * yKnob) >> 12;
                 if (maxSize < kMinGrainSize)
                 {
                     maxSize = kMinGrainSize;
                 }
-                grain.sizeSamples = (rndi32() % (maxSize - kMinGrainSize)) + kMinGrainSize;
+
+                uint32_t nextSize = (rndi32() % (maxSize - kMinGrainSize)) + kMinGrainSize;
+
+                if (sleepRand < sleepChance)
+                {
+                    grain.sleepCounter = nextSize;
+                    continue;
+                }
+              
+                if (headRoom > 4096)
+                {
+                    headRoom = 4096;
+                }
+                grain.startIndex =  (writeI + kBufSize - (rndi32() % kBufSize))  % kBufSize;
+                //grain.sizeSamples = static_cast<unsigned int>((0.01f + static_cast<float>(rand()) / RAND_MAX 0.49f) context->audioSampleRate);
+               
+                grain.sizeSamples = nextSize;
                 grain.currentIndex = 0;
                 grain.pan = rnd8(); // pan indexes the power pan array that has 256 entries
                 if (grain.pan > 255)
@@ -224,6 +239,13 @@ void TriggaHappy::ProcessSample()
                 {
                     grain.currentIndex++;
                 }
+            }
+
+            if (grain.currentIndex >= grain.sizeSamples)
+            {
+                  // When the grain has finished then we add it's old level back to
+                // the headRoom
+                headRoom += grain.level;
             }
 
             if ( g < 6)
