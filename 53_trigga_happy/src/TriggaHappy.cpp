@@ -110,7 +110,9 @@ void TriggaHappy::ProcessSample()
 
         int16_t audioM = (audioL + audioR) >> inputShift;
 
-        audioM = notchFilter.ProcessSample(audioM);
+        // not sure if this is needed
+        // going without for the time being
+        //audioM = notchFilter.ProcessSample(audioM);
 
         int16_t maxWet = 0;
 
@@ -386,7 +388,7 @@ void TriggaHappy::ProcessSample()
             {
                 recordState = RecordStateEnteringOff;
             }
-            else if (recordStateHannIndex >= kHalfHannSize)
+            else if (recordStateHannIndex >= (kHalfHannSize-1))
             {
                 recordState = RecordStateOn;
             }

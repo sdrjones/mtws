@@ -23,7 +23,7 @@ private:
 
     static constexpr uint32_t kBufSize = 2 * 48000;
     static const uint32_t kMaxGrains = 6;
-    static constexpr uint32_t kMaxGrainSize = kBufSize; //48000;
+    static constexpr uint32_t kMaxGrainSize = kBufSize;
     static constexpr uint32_t kMinGrainSize = 2048;
     static constexpr uint32_t kMinSleepSize = 24000;
     static constexpr uint32_t kMaxUnsigned = 4095;
