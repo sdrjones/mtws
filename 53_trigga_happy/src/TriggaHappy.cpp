@@ -228,6 +228,27 @@ void TriggaHappy::ProcessSample()
                     }
 #ifdef REPEAT_CHANCE
                 }
+                else
+                {
+                    // We want to repeat the grain but that might be problematic due to the 
+                    // changed write position so double check that and revert to pitch normal
+                    // (where we will never overtake or get undertaken by the record head)
+                    uint16_t distBehind = distance_in_circular_buffer(grain.startIndex, writeI, kBufSize);
+                    uint16_t distAhead = kBufSize - distBehind;
+                    if ((grain.pitch == OctaveHigh) && ((distBehind >> 1) > grain.sizeSamples))
+                    {
+                        grain.pitch = OctaveHigh;
+                    }
+                    else if ((grain.pitch == OctaveLow) && ((distAhead >> 1) > grain.sizeSamples))
+                    {
+                        grain.pitch = OctaveLow;
+                        grain.subIndex = 1;
+                    }
+                    else
+                    {
+                        grain.pitch = Normal;
+                    }
+                }
 #endif
             }
 
