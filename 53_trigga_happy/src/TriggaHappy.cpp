@@ -58,9 +58,13 @@ TriggaHappy::TriggaHappy() : notchFilter(NotchFilter::Q100)
 {
     clearBuffers();
     resetPointers();
+    ReadKnobs();
     halftime = false;
     startupCounter = 400;
-
+    recordStateHannIndex = 0;
+    recordState = RecordStateOff;
+    curSwitch = SwitchVal();
+    
     for (int g = 0; g < kMaxGrains; ++g)
     {
         grains[g].currentIndex = 0;
@@ -86,13 +90,15 @@ void TriggaHappy::ProcessSample()
 
     if (startupCounter == 0)
     {
-        ReadKnobs();
-        Switch s = SwitchVal();
+
+
         ReadAudio();
 
         if (halftime)
         {
+            ReadKnobs();
             ReadCV();
+            curSwitch = SwitchVal();
         }
 
         uint16_t grainCount = 6;
@@ -353,7 +359,7 @@ void TriggaHappy::ProcessSample()
 
         // Currently Middle is don't record,
         // either up or down is record
-        if (s != Switch::Middle)
+        if (curSwitch != Switch::Middle)
         {
             shouldRecord = true;
         }
@@ -365,18 +371,20 @@ void TriggaHappy::ProcessSample()
         switch (recordState)
         {
         case RecordStateOn:
+        {
             audioBuf[writeI] = audioM;
             if (!shouldRecord)
             {
                 recordState = RecordStateEnteringOff;
             }
-            break;
+        }
+        break;
 
         case RecordStateEnteringOn:
         {
 
             uint32_t fadedIn = audioM * kHannWindowFirstHalf[recordStateHannIndex];
-            uint32_t fadedBuf = audioBuf[writeI] * (kHannWindowFirstHalf[kHalfHannSize - recordStateHannIndex]);
+            uint32_t fadedBuf = audioBuf[writeI] * (kHannWindowFirstHalf[(kHalfHannSize-1) - recordStateHannIndex]);
 
             // Because this is a crossfade there is no need to right shift the
             // sum result
@@ -416,16 +424,17 @@ void TriggaHappy::ProcessSample()
         break;
 
         case RecordStateOff:
+        {
             if (shouldRecord)
             {
                 recordState = RecordStateEnteringOn;
             }
+        }
+        break;
 
         default:
             break;
         }
-
-        lastSwitch = s;
 
         writeI = (writeI + 1) % kBufSize;
         readI = (readI + 1) % kBufSize;

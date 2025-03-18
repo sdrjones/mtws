@@ -70,7 +70,7 @@ private:
     uint16_t headRoom = 4096; // The "level" available for all grains
     uint32_t sleepChance = 1000; // out of 4096
 
-    Switch lastSwitch;
+    Switch curSwitch;
     enum RecordState recordState = RecordStateOff;
     uint16_t recordStateHannIndex = 0;
 
