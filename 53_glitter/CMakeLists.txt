@@ -16,7 +16,7 @@ set(PICO_BOARD pico CACHE STRING "Board type")
 
 cmake_minimum_required (VERSION 3.13)
 include(pico_sdk_import.cmake)
-set(PROJECT_NAME trigga_happy)
+set(PROJECT_NAME glitter)
 project(${PROJECT_NAME} C CXX ASM)
 set(CMAKE_CXX_STANDARD 17)
 pico_sdk_init()
@@ -34,7 +34,7 @@ pico_add_extra_outputs(${PROJECT_NAME})
 target_sources(${PROJECT_NAME} PUBLIC
 ${CMAKE_CURRENT_LIST_DIR}/main.cpp
 ${CMAKE_CURRENT_LIST_DIR}/src/NotchFilter.cpp
-${CMAKE_CURRENT_LIST_DIR}/src/TriggaHappy.cpp
+${CMAKE_CURRENT_LIST_DIR}/src/Glitter.cpp
 ${CMAKE_CURRENT_LIST_DIR}/src/Utils.cpp
 )
 

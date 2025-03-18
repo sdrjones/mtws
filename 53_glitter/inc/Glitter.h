@@ -6,10 +6,10 @@
 #include "Random.h"
 
 
-class TriggaHappy : public ComputerCard
+class Glitter : public ComputerCard
 {
 public:
-    TriggaHappy();
+    Glitter();
     void __not_in_flash_func(ProcessSample)();
 
 private:

@@ -1,5 +1,5 @@
 #include "ComputerCard.h"
-#include "TriggaHappy.h"
+#include "Glitter.h"
 
 int main()
 {
@@ -7,7 +7,7 @@ int main()
 	// PICO_USE_FASTEST_SUPPORTED_CLOCK=1
 	// int he main CMakeLists.txt file.
 	//set_sys_clock_khz(160000, true); // from Chris J Utility Pair
-	TriggaHappy sh;
+	Glitter sh;
 	sh.EnableNormalisationProbe();
 	sh.Run();
 }

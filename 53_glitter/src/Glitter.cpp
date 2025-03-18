@@ -1,6 +1,6 @@
 #define COMPUTERCARD_NOIMPL
 #include "ComputerCard.h"
-#include "TriggaHappy.h"
+#include "Glitter.h"
 #include "NotchFilter.h"
 #include "Utils.h"
 #include "HannWindow.h"
@@ -54,7 +54,7 @@ uint32_t __not_in_flash_func(distance_in_circular_buffer)(uint32_t a, uint32_t b
     }
 }
 
-TriggaHappy::TriggaHappy() : notchFilter(NotchFilter::Q100)
+Glitter::Glitter() : notchFilter(NotchFilter::Q100)
 {
     clearBuffers();
     resetPointers();
@@ -78,7 +78,7 @@ TriggaHappy::TriggaHappy() : notchFilter(NotchFilter::Q100)
     }
 }
 
-void TriggaHappy::ProcessSample()
+void Glitter::ProcessSample()
 {
 
     halftime = !halftime;
@@ -444,7 +444,7 @@ void TriggaHappy::ProcessSample()
     }
 }
 
-void TriggaHappy::clearBuffers(void)
+void Glitter::clearBuffers(void)
 {
     for (int i = 0; i < kBufSize; ++i)
     {
@@ -452,13 +452,13 @@ void TriggaHappy::clearBuffers(void)
     }
 }
 
-void TriggaHappy::resetPointers(void)
+void Glitter::resetPointers(void)
 {
     writeI = 1;
     readI = 0;
 }
 
-void TriggaHappy::ReadKnobs(void)
+void Glitter::ReadKnobs(void)
 {
     // Virtual detent the knob values
     mainKnob = virtualDetentedKnob(KnobVal(Knob::Main));
@@ -466,13 +466,13 @@ void TriggaHappy::ReadKnobs(void)
     yKnob = virtualDetentedKnob(KnobVal(Knob::Y));
 }
 
-void TriggaHappy::ReadAudio(void)
+void Glitter::ReadAudio(void)
 {
     audioL = AudioIn1(); // -2048 to 2047
     audioR = AudioIn2(); // -2048 to 2047
 }
 
-void TriggaHappy::ReadCV(void)
+void Glitter::ReadCV(void)
 {
     cv1 = Connected(ComputerCard::Input(Input::CV1)) ? CVIn1() : 2000; // -2048 to 2047
     cv2 = Connected(ComputerCard::Input(Input::CV2)) ? CVIn2() : 2000; // -2048 to 2047
