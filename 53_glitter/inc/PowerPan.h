@@ -1,5 +1,8 @@
 #include <cstdint>
 
+// Lookup table for panning while maintaining perceived signal volume
+// across the sound stage
+
 constexpr int16_t kPanPositions = 256; 
 
 static const int16_t kLeftGains[256] = {

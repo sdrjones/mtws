@@ -1,11 +1,4 @@
 #include "Utils.h"
-// random number generator
-int32_t rnd()
-{
-    static uint32_t lcg_seed = 1;
-    lcg_seed = 1664525 * lcg_seed + 1013904223;
-    return lcg_seed >> 16;
-}
 
 int32_t cabs(int32_t a)
 {

@@ -7,35 +7,10 @@ constexpr int16_t kMaxValue = 32767; // Maximum value for int16_t
 constexpr int16_t kWindowLength = 2048; // Hann window length
 constexpr int16_t kHalfHannSize = 1024; // Half Hann window length
 
-template <typename T, std::size_t N, typename Generator>
-constexpr std::array<T,N> make_array(Generator fn) {
-    std::array<T, N> table = {};
-    for (std::size_t i = 0; i < N; ++i)
-    {
-        table[i] = fn(i, N);
-    }
-    return table;
-}
 
 
-// static const int16_t kHannWindow[kWindowLength] = {
-//      constexpr {
-//         int16_t table[kWindowLength];
-//         for (int i = 0; i < kWindowLength; ++i) {
-//             table[i] = static_cast<int16_t>(kMaxValue * 0.5 * (1 - std::cos(2 * M_PI * i / (kWindowLength-1))));
-//         }
-//         return table;
-//     }()
-// };
-
-
-// constexpr int16_t hannValue(std::size_t i, std::size_t N)
-// {
-//     return static_cast<int16_t>(kMaxValue * 0.5 * (1 - std::cos(2 * M_PI * i / (N-1))));
-// }
-
-// constexpr auto hannLookup = make_array<int16_t, 2048>(hannValue);
-
+// Hann window lookup table generated from
+//  table[i] = static_cast<int16_t>(kMaxValue * 0.5 * (1 - std::cos(2 * M_PI * i / (kWindowLength-1))));
 
 static const int16_t kHannWindowFirstHalf[kHalfHannSize] = {
 0, 0, 0, 0, 1, 1, 2, 3, 4, 6, 7, 9, 11, 13, 15, 17, 
