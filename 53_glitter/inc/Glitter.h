@@ -32,7 +32,9 @@ private:
     static constexpr uint16_t kDefaultSleepChance = 1500; // Lower = more sleep, 0-2000
     static constexpr uint16_t kDefaultRepeatChance = 2000; // Lower = more repeats, 0-2000
     static constexpr uint64_t kMaxSamplesBetweenClocks = kBufSize / 2;
-    static constexpr uint64_t kClockChangeThreshold = 480; // Ignore clock jitter lower than this
+    static constexpr uint64_t kClockChangeThreshold = 4800; // Ignore clock jitter lower than this
+    static constexpr uint64_t kAbsMaxClockShift = 1;
+    static constexpr uint8_t kDontShiftBelow = 128;
     
     
     enum Pitch
