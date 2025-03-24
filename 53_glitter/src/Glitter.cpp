@@ -252,12 +252,14 @@ void Glitter::ProcessSample()
                     else
                     {
                         uint32_t shift = 0;
-                        uint8_t tmpRnd = rnd8();
+                        // uint8_t tmpRnd = rnd8();
 
-                        if (tmpRnd > kDontShiftBelow)
-                        {
-                            shift = rnd8() % (maxClockShiftDown_ + maxClockShiftUp_ + 1);
-                        }
+                        // if (tmpRnd > kDontShiftBelow)
+                        // {
+                        //     shift = rnd8() % (maxClockShiftDown_ + maxClockShiftUp_ + 1);
+                        // }
+
+                        shift = ((maxClockShiftDown_ + maxClockShiftUp_ + 1) * (4095 - yKnob_)) >> 12;
 
 
                         nextSize = (samplesPerBeat_ << maxClockShiftUp_) >> shift;
@@ -288,7 +290,7 @@ void Glitter::ProcessSample()
                     }
                     else
                     {
-                        uint32_t shift = 0;
+                        uint32_t shift = maxClockShiftUp_;
                         uint8_t tmpRnd = rnd8();
 
                         if (tmpRnd > kDontShiftBelow)
