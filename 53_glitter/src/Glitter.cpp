@@ -64,7 +64,9 @@ Glitter::Glitter()
     recordState_ = RecordStateOff;
     curSwitch_ = SwitchVal();
     clockCount_ = 0;
-    samplesPerBeat_ = 0;
+    samplesPerPulse_ = 0;
+    samplesMultiplier_ = 0;
+    clockLed_ = 0;
     clockState_ = ClockOff;
     maxClockShiftDown_ = 1;
     maxClockShiftUp_ = 1;
@@ -125,7 +127,7 @@ void Glitter::ProcessSample()
                 case ClockOff:
                 {   
                     clockState_ = ClockWaitingFirstPulse;
-                    samplesPerBeat_ = 0;
+                    samplesPerPulse_ = 0;
                 }
                 break;
 
@@ -145,21 +147,40 @@ void Glitter::ProcessSample()
                     clockCount_++;
                     if (PulseIn1RisingEdge())
                     {
-                        if (abs(clockCount_ - samplesPerBeat_) > kClockChangeThreshold)
+                        if (abs(clockCount_ - samplesPerPulse_) > kClockChangeThreshold)
                         {
-                            samplesPerBeat_ = clockCount_;
+                            //Use this to debug clock changes
+                            //LedBrightness(5, clockLed_ * 2048);
+                            //clockLed_ = (clockLed_ + 1) % 2;
+
+                            samplesPerPulse_ = clockCount_;
                             maxClockShiftDown_ = 0;
                             maxClockShiftUp_ = 0;
+
+                            uint64_t samplesPerQuaver_ = samplesPerPulse_ << 1;
+
+                            if ((samplesPerQuaver_ * 6) <= kBufSize)
+                            {
+                                samplesMultiplier_ = samplesPerQuaver_;
+                            }
+                            else if ((samplesPerQuaver_ * 3) <= kBufSize)
+                            {
+                                samplesMultiplier_ = samplesPerPulse_;
+                            }
+                            else
+                            {
+                                samplesMultiplier_ = samplesPerPulse_ >> 1;
+                            }
                             
                             uint32_t tmp = kMinGrainSize;
-                            while ((tmp < samplesPerBeat_) && (maxClockShiftDown_ <= kAbsMaxClockShift))
+                            while ((tmp < samplesPerPulse_) && (maxClockShiftDown_ <= kAbsMaxClockShift))
                             {
                                 tmp = tmp << 1;
                                 maxClockShiftDown_++;
                             }
 
                             tmp = kMaxGrainSize;
-                            while ((tmp  >= samplesPerBeat_) && (maxClockShiftUp_ <= kAbsMaxClockShift))
+                            while ((tmp  >= samplesPerPulse_) && (maxClockShiftUp_ <= kAbsMaxClockShift))
                             {
                                 tmp = tmp << 1;
                                 maxClockShiftUp_++;
@@ -252,17 +273,10 @@ void Glitter::ProcessSample()
                     else
                     {
                         uint32_t shift = 0;
-                        // uint8_t tmpRnd = rnd8();
-
-                        // if (tmpRnd > kDontShiftBelow)
-                        // {
-                        //     shift = rnd8() % (maxClockShiftDown_ + maxClockShiftUp_ + 1);
-                        // }
-
                         shift = ((maxClockShiftDown_ + maxClockShiftUp_ + 1) * (4095 - yKnob_)) >> 12;
 
 
-                        nextSize = (samplesPerBeat_ << maxClockShiftUp_) >> shift;
+                        nextSize = (samplesPerPulse_ << maxClockShiftUp_) >> shift;
     
 
                         if (nextSize < kMinGrainSize)
@@ -290,14 +304,15 @@ void Glitter::ProcessSample()
                     }
                     else
                     {
-                        uint32_t shift = maxClockShiftUp_;
-                        uint8_t tmpRnd = rnd8();
+                        // uint32_t shift = maxClockShiftUp_;
+                        // uint8_t tmpRnd = rnd8();
 
-                        if (tmpRnd > kDontShiftBelow)
-                        {
-                            shift = rnd8() % (maxClockShiftDown_ + maxClockShiftUp_ + 1);
-                        }
-                        offset = (samplesPerBeat_ << maxClockShiftUp_) >> shift;
+                        // if (tmpRnd > kDontShiftBelow)
+                        // {
+                        //     shift = rnd8() % (maxClockShiftDown_ + maxClockShiftUp_ + 1);
+                        // }
+                        // offset = (samplesPerBeat_ << maxClockShiftUp_) >> shift;
+                        offset = (samplesMultiplier_) * g;
                     }
 
                     grain.startIndex_ = (writeI_ + kBufSize - (offset)) % kBufSize;
@@ -442,7 +457,7 @@ void Glitter::ProcessSample()
 #endif
             }
 
-            if (g < 6)
+            if (g < kMaxGrains)
             {
                 LedBrightness(g, abs(grainSample) << 2);
             }

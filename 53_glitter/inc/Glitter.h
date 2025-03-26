@@ -32,9 +32,10 @@ private:
     static constexpr uint16_t kDefaultSleepChance = 1500; // Lower = more sleep, 0-2000
     static constexpr uint16_t kDefaultRepeatChance = 2000; // Lower = more repeats, 0-2000
     static constexpr uint64_t kMaxSamplesBetweenClocks = kBufSize / 2;
-    static constexpr uint64_t kClockChangeThreshold = 4800; // Ignore clock jitter lower than this
+    static constexpr uint64_t kClockChangeThreshold = 48; // Ignore clock jitter lower than this
     static constexpr uint64_t kAbsMaxClockShift = 1;
     static constexpr uint8_t kDontShiftBelow = 128;
+
     
     
     enum Pitch
@@ -82,11 +83,13 @@ private:
     uint32_t startupCounter_ = 400;
     uint16_t headRoom_ = 4096; // The "level" available for all grains
     uint64_t clockCount_ = 0; // samples between pulse 1 rising
-    uint64_t samplesPerBeat_ = 0; 
+    uint64_t samplesPerPulse_ = 0; 
+    uint64_t samplesMultiplier_ = 0;
     uint64_t minClockedBeat_;
     enum ClockState clockState_ = ClockOff;
     uint16_t maxClockShiftDown_ = 1;
     uint16_t maxClockShiftUp_ = 1;
+    uint32_t clockLed_ = 0;
     
 
     Switch curSwitch_;
