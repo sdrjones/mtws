@@ -63,6 +63,14 @@ Glitter::Glitter()
     recordStateHannIndex_ = 0;
     recordState_ = RecordStateOff;
     curSwitch_ = SwitchVal();
+    clockCount_ = 0;
+    samplesPerPulse_ = 0;
+    samplesMultiplier_ = 0;
+    clockLed_ = 0;
+    clockState_ = ClockOff;
+    maxClockShiftDown_ = 1;
+    maxClockShiftUp_ = 1;
+
     
     for (int g = 0; g < kMaxGrains; ++g)
     {
@@ -111,6 +119,94 @@ void Glitter::ProcessSample()
         if (Connected(Input::Audio1) && Connected(Input::Audio2))
         {
             inputShift = 1;
+        }
+
+        if (Connected(Input::Pulse1))
+        {
+            switch (clockState_){
+                case ClockOff:
+                {   
+                    clockState_ = ClockWaitingFirstPulse;
+                    samplesPerPulse_ = 0;
+                }
+                break;
+
+                case ClockWaitingFirstPulse:
+                {
+                    if (PulseIn1RisingEdge())
+                    {
+                        clockCount_ = 0;
+                        clockState_ = ClockWaitingSecondPulse;
+                    }
+                }
+                break;
+
+                case ClockWaitingSecondPulse:
+                case ClockRunning:
+                {
+                    clockCount_++;
+                    if (PulseIn1RisingEdge())
+                    {
+                        if (abs(clockCount_ - samplesPerPulse_) > kClockChangeThreshold)
+                        {
+                            //Use this to debug clock changes
+                            //LedBrightness(5, clockLed_ * 2048);
+                            //clockLed_ = (clockLed_ + 1) % 2;
+
+                            samplesPerPulse_ = clockCount_;
+                            maxClockShiftDown_ = 0;
+                            maxClockShiftUp_ = 0;
+
+                            uint64_t samplesPerQuaver_ = samplesPerPulse_ << 1;
+
+                            if ((samplesPerQuaver_ * 6) <= kBufSize)
+                            {
+                                samplesMultiplier_ = samplesPerQuaver_;
+                            }
+                            else if ((samplesPerQuaver_ * 3) <= kBufSize)
+                            {
+                                samplesMultiplier_ = samplesPerPulse_;
+                            }
+                            else
+                            {
+                                samplesMultiplier_ = samplesPerPulse_ >> 1;
+                            }
+                            
+                            uint32_t tmp = kMinGrainSize;
+                            while ((tmp < samplesPerPulse_) && (maxClockShiftDown_ <= kAbsMaxClockShift))
+                            {
+                                tmp = tmp << 1;
+                                maxClockShiftDown_++;
+                            }
+
+                            tmp = kMaxGrainSize;
+                            while ((tmp  >= samplesPerPulse_) && (maxClockShiftUp_ <= kAbsMaxClockShift))
+                            {
+                                tmp = tmp << 1;
+                                maxClockShiftUp_++;
+                            }
+                        }
+                        clockCount_ = 0;
+                        clockState_ = ClockRunning;
+                    }
+                    else if (clockCount_ > kMaxSamplesBetweenClocks)
+                    {
+                        clockCount_ = 0;
+                        clockState_ = ClockWaitingFirstPulse;
+                    }
+
+                }
+                break;
+
+                default:
+                    break;
+
+            }
+
+        }
+        else
+        {
+            clockState_ = ClockOff;
         }
 
         int16_t audioM = (audioL_ + audioR_) >> inputShift;
@@ -169,16 +265,58 @@ void Glitter::ProcessSample()
                         maxSize = kMinGrainSize;
                     }
 
-                    uint32_t nextSize = (rndi32() % (maxSize - kMinGrainSize)) + kMinGrainSize;
+                    uint64_t nextSize = 0;
+                    if (clockState_ != ClockRunning)
+                    {
+                        nextSize = (rndi32() % (maxSize - kMinGrainSize)) + kMinGrainSize;
+                    }
+                    else
+                    {
+                        uint32_t shift = 0;
+                        shift = ((maxClockShiftDown_ + maxClockShiftUp_ + 1) * (4095 - yKnob_)) >> 12;
+
+
+                        nextSize = (samplesPerPulse_ << maxClockShiftUp_) >> shift;
+    
+
+                        if (nextSize < kMinGrainSize)
+                        {
+                            // This will be out of beat so
+                            // indicates that something has gone wrong
+                            // with the maxClockShiftDown_ logic
+                            nextSize = kMinGrainSize;
+                        }
+                        else if (nextSize > kMaxGrainSize)
+                        {
+                            nextSize = kMaxGrainSize;
+                        }
+                    }
 
                     if (headRoom_ > 4096)
                     {
                         headRoom_ = 4096;
                     }
 
-                    grain.startIndex_ = (writeI_ + kBufSize - (rndi32() % startRange)) % kBufSize;
-                    // grain.sizeSamples_ = static_cast<unsigned int>((0.01f + static_cast<float>(rand()) / RAND_MAX 0.49f) context->audioSampleRate);
+                    uint64_t offset = 0;
+                    if (clockState_ != ClockRunning)
+                    {
+                        offset = rndi32() % startRange;
+                    }
+                    else
+                    {
+                        // uint32_t shift = maxClockShiftUp_;
+                        // uint8_t tmpRnd = rnd8();
 
+                        // if (tmpRnd > kDontShiftBelow)
+                        // {
+                        //     shift = rnd8() % (maxClockShiftDown_ + maxClockShiftUp_ + 1);
+                        // }
+                        // offset = (samplesPerBeat_ << maxClockShiftUp_) >> shift;
+                        offset = (samplesMultiplier_) * g;
+                    }
+
+                    grain.startIndex_ = (writeI_ + kBufSize - (offset)) % kBufSize;
+                    
                     grain.sizeSamples_ = nextSize;
 
                     grain.pan_ = rnd8(); // pan indexes the power pan_ array that has 256 entries
@@ -319,7 +457,7 @@ void Glitter::ProcessSample()
 #endif
             }
 
-            if (g < 6)
+            if (g < kMaxGrains)
             {
                 LedBrightness(g, abs(grainSample) << 2);
             }
@@ -450,8 +588,8 @@ void Glitter::ReadAudio(void)
 
 void Glitter::ReadCV(void)
 {
-    cv1_ = Connected(ComputerCard::Input(Input::CV1)) ? CVIn1() : 2000; // -2048 to 2047
-    cv2_ = Connected(ComputerCard::Input(Input::CV2)) ? CVIn2() : 2000; // -2048 to 2047
+    cv1_ = Connected(ComputerCard::Input(Input::CV1)) ? CVIn1() : kDefaultRepeatChance; // -2048 to 2047
+    cv2_ = Connected(ComputerCard::Input(Input::CV2)) ? CVIn2() : kDefaultSleepChance; // -2048 to 2047
 
     if (cv1_ > 2000)
         cv1_ = 2000;

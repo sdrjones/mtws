@@ -6,20 +6,20 @@ int32_t cabs(int32_t a)
 }
 
 // taken from goldfish
-// If a knob foes near either limit, or the middle,
+// If a knob goes near either limit, or the middle,
 // clamp it to that limit (or to the middle)
 int16_t virtualDetentedKnob(int16_t val)
 {
-    if (val > 4079)
+    if (val > 4071)
     {
         val = 4095;
     }
-    else if (val < 16)
+    else if (val < 24)
     {
         val = 0;
     }
 
-    if (cabs(val - 2048) < 16)
+    if (cabs(val - 2048) < 24)
     {
         val = 2048;
     }
