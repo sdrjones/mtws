@@ -34,3 +34,4 @@
 # Custom
 */build/*
 .DS_Store
+*.swp
