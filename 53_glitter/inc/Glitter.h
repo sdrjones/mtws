@@ -69,6 +69,7 @@ private:
         unsigned int pan_;
         unsigned int level_;
         Pitch pitch_;
+        Pitch intendedPitch_;
         unsigned int subIndex_;
         unsigned int sleepCounter_;
     };
@@ -77,6 +78,7 @@ private:
     int16_t audioBuf_[kBufSize];
     
     uint32_t writeI_ = 1;
+    uint32_t lastRecordedWriteI_ = 1;
     uint32_t readI_ = 0;
     Grain grains_[kMaxGrains];
     bool halfTime_ = false;    // Some controls are only read every other Process call

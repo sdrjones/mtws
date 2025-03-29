@@ -80,6 +80,7 @@ Glitter::Glitter()
         grains_[g].level_ = 0;
         grains_[g].pan_ = 128;
         grains_[g].pitch_ = Normal;
+        grains_[g].intendedPitch_ = Normal;
         grains_[g].subIndex_ = 0;
         grains_[g].sleepCounter_ = 400;
     }
@@ -304,18 +305,10 @@ void Glitter::ProcessSample()
                     }
                     else
                     {
-                        // uint32_t shift = maxClockShiftUp_;
-                        // uint8_t tmpRnd = rnd8();
-
-                        // if (tmpRnd > kDontShiftBelow)
-                        // {
-                        //     shift = rnd8() % (maxClockShiftDown_ + maxClockShiftUp_ + 1);
-                        // }
-                        // offset = (samplesPerBeat_ << maxClockShiftUp_) >> shift;
                         offset = (samplesMultiplier_) * g;
                     }
 
-                    grain.startIndex_ = (writeI_ + kBufSize - (offset)) % kBufSize;
+                    grain.startIndex_ = (lastRecordedWriteI_ + kBufSize - (offset)) % kBufSize;
                     
                     grain.sizeSamples_ = nextSize;
 
@@ -331,7 +324,7 @@ void Glitter::ProcessSample()
 
                     // Calculate the distance from the write pointer to figure out if we can play the grain
                     // at a different rate from the rate at which we are writing to audioBuf
-                    uint16_t distBehind = distance_in_circular_buffer(grain.startIndex_, writeI_, kBufSize);
+                    uint16_t distBehind = distance_in_circular_buffer(grain.startIndex_, lastRecordedWriteI_, kBufSize);
                     uint16_t distAhead = kBufSize - distBehind;
 
                     if ((pitchRand < (xKnob_ >> 1)) && ((distBehind >> 1) > grain.sizeSamples_))
@@ -347,6 +340,8 @@ void Glitter::ProcessSample()
                     {
                         grain.pitch_ = Normal;
                     }
+
+                    grain.intendedPitch_ = grain.pitch_;
 
                     // Set the level to the random level
                     grain.level_ = rndLevel;
@@ -374,8 +369,10 @@ void Glitter::ProcessSample()
                     // We want to repeat the grain but that might be problematic due to the 
                     // changed write position so double check that and revert to pitch normal
                     // (where we will never overtake or get undertaken by the record head)
-                    uint16_t distBehind = distance_in_circular_buffer(grain.startIndex_, writeI_, kBufSize);
+                    uint16_t distBehind = distance_in_circular_buffer(grain.startIndex_, lastRecordedWriteI_, kBufSize);
                     uint16_t distAhead = kBufSize - distBehind;
+                    // Reset the pitch to its original selection
+                    grain.pitch_ = grain.intendedPitch_;
                     if ((grain.pitch_ == OctaveHigh) && ((distBehind >> 1) > grain.sizeSamples_))
                     {
                         grain.pitch_ = OctaveHigh;
@@ -491,6 +488,7 @@ void Glitter::ProcessSample()
             {
                 recordState_ = RecordStateEnteringOff;
             }
+            lastRecordedWriteI_ = writeI_;
         }
         break;
 
@@ -514,6 +512,7 @@ void Glitter::ProcessSample()
             {
                 recordState_ = RecordStateOn;
             }
+            lastRecordedWriteI_ = writeI_;
         }
         break;
 
@@ -534,6 +533,7 @@ void Glitter::ProcessSample()
             {
                 recordState_ = RecordStateOff;
             }
+            lastRecordedWriteI_ = writeI_;
         }
         break;
 
