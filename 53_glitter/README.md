@@ -2,7 +2,7 @@
 
 A two second sampler with stereo granulated playback for the Music Thing Modular Workshop System Computer.
 
-## Note
+## Note
 
 Glitter runs at a 160MHz clock speed. Since Pico SDK 2.1.1 this is no longer considered to be overclocked
 but I thought the speed bump was worth pointing out.
@@ -64,9 +64,9 @@ more positive voltage.
 
 **LEDs**: Each LED shows the current level of a grain's output. Six LEDs, six grains - nice!
 
----
 
-## Credits
+
+## Credits
 
 Thanks to Tom Whitwell for the amazing Music Thing Modular Workshop System.
 
