@@ -39,6 +39,6 @@ ${CMAKE_CURRENT_LIST_DIR}/src/Utils.cpp
 )
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE PICO_XOSC_STARTUP_DELAY_MULTIPLIER=64)
-target_compile_definitions(${PROJECT_NAME} PRIVATE PICO_USE_FASTEST_SUPPORTED_CLOCK=0)
+target_compile_definitions(${PROJECT_NAME} PRIVATE PICO_USE_FASTEST_SUPPORTED_CLOCK=1)
 
 pico_enable_stdio_usb(${PROJECT_NAME} 0)

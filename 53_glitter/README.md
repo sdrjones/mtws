@@ -4,8 +4,9 @@ A two second sampler with stereo granulated playback for the Music Thing Modular
 
 ## Note
 
-Glitter runs at a 160MHz clock speed. Since Pico SDK 2.1.1 this is no longer considered to be overclocked
-but I thought the speed bump was worth pointing out.
+Glitter runs at a 200MHz clock speed. This is the maximum supported clock speed in Pico SDK 2.1.1 but in previous
+SDKs it would have been considered to be overclocked. If you want to run at a lower clock speed without clicks
+then you would need to reduce the maximum number of grains and rebuild the code
 
 ## Summary
 
@@ -37,10 +38,13 @@ NB. There is no dry or monitor output from glitter but you could patch that usin
 
 ---
 
-**X Knob**: Modify the chance of grains playing back an octave higher or an octave lower. Ranges from
+**X Knob (In Play)**: Modify the chance of grains playing back an octave higher or an octave lower. Ranges from
 zero chance (fully anti-clockwise) to maximum chance (fully clockwise). NB grains will only re-pitch 
 if they can safely do so without tripping over the write head, so at longer lengths there won't
 be as much re-pitching.
+
+**X Knob (In Record)**: Adjust the mix between existing signal and new signal. Fully anti-clockwise is all
+new signal, fully clockwise is all old signal.
 
 ---
 
