@@ -70,6 +70,7 @@ Glitter::Glitter()
     clockState_ = ClockOff;
     maxClockShiftDown_ = 1;
     maxClockShiftUp_ = 1;
+    pitchChance_ = 0;
 
     
     for (int g = 0; g < kMaxGrains; ++g)
@@ -327,11 +328,11 @@ void Glitter::ProcessSample()
                     uint16_t distBehind = distance_in_circular_buffer(grain.startIndex_, lastRecordedWriteI_, kBufSize);
                     uint16_t distAhead = kBufSize - distBehind;
 
-                    if ((pitchRand < (xKnob_ >> 1)) && ((distBehind >> 1) > grain.sizeSamples_))
+                    if ((pitchRand < (pitchChance_ >> 1)) && ((distBehind >> 1) > grain.sizeSamples_))
                     {
                         grain.pitch_ = OctaveHigh;
                     }
-                    else if ((pitchRand < (xKnob_)) && ((distAhead >> 1) > grain.sizeSamples_))
+                    else if ((pitchRand < (pitchChance_)) && ((distAhead >> 1) > grain.sizeSamples_))
                     {
                         grain.pitch_ = OctaveLow;
                         grain.subIndex_ = 1;
@@ -473,17 +474,35 @@ void Glitter::ProcessSample()
         if (curSwitch_ != Switch::Middle)
         {
             shouldRecord = true;
+            if (oldSignalLevel_ < xKnob_)
+            {
+                oldSignalLevel_++;
+            }
+            else if (oldSignalLevel_ > xKnob_)
+            {
+                oldSignalLevel_--;
+            }
         }
+        else
+        {
+            pitchChance_ = xKnob_;
+        }
+
 
         // The record state machine aims to crossfade between the buffer and
         // live input when starting/stopping recording so as not to
         // get a glitch
         // I'm using the  hann
+
+
+        audioM = (audioBuf_[writeI_] * (oldSignalLevel_) >> 13) + (audioM * (4095 - (oldSignalLevel_)) >> 12);
+
         switch (recordState_)
         {
         case RecordStateOn:
         {
             audioBuf_[writeI_] = audioM;
+            //audioBuf_[writeI_] = (audioBuf_[writeI_] * (oldSignalLevel_) >> 13) + (audioM * (4095 - (oldSignalLevel_)) >> 12);
             if (!shouldRecord)
             {
                 recordState_ = RecordStateEnteringOff;
@@ -501,8 +520,10 @@ void Glitter::ProcessSample()
             // Because this is a crossfade there is no need to right shift the
             // sum result
             uint32_t fadedSum = (fadedIn + fadedBuf);
+            uint16_t fadedSum16 = static_cast<uint16_t>(fadedSum >> 15);
 
-            audioBuf_[writeI_] = static_cast<uint16_t>(fadedSum >> 15);
+            audioBuf_[writeI_] = fadedSum16;
+            
             recordStateHannIndex_++;
             if (!shouldRecord)
             {
@@ -522,8 +543,9 @@ void Glitter::ProcessSample()
             uint32_t fadedBuf = audioBuf_[writeI_] * (kHannWindowFirstHalf[kHalfHannSize - recordStateHannIndex_]);
 
             uint32_t fadedSum = (fadedIn + fadedBuf);
-
-            audioBuf_[writeI_] = static_cast<uint16_t>(fadedSum >> 15);
+            uint16_t fadedSum16 = static_cast<uint16_t>(fadedSum >> 15);
+            audioBuf_[writeI_] = fadedSum16;
+            
             recordStateHannIndex_--;
             if (shouldRecord)
             {

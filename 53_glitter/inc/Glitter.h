@@ -92,6 +92,9 @@ private:
     uint16_t maxClockShiftDown_ = 1;
     uint16_t maxClockShiftUp_ = 1;
     uint32_t clockLed_ = 0;
+    int32_t oldSignalLevel_ = 0;
+    int16_t pitchChance_ = 0;
+
     
 
     Switch curSwitch_;
