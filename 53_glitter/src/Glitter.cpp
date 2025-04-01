@@ -495,7 +495,7 @@ void Glitter::ProcessSample()
         // I'm using the  hann
 
 
-        audioM = (audioBuf_[writeI_] * (oldSignalLevel_) >> 13) + (audioM * (4095 - (oldSignalLevel_)) >> 12);
+        audioM = (audioBuf_[writeI_] * (oldSignalLevel_) >> 12) + (audioM * (4095 - (oldSignalLevel_)) >> 12);
 
         switch (recordState_)
         {
