@@ -69,11 +69,10 @@ more positive voltage.
 **LEDs**: Each LED shows the current level of a grain's output. Six LEDs, six grains - nice!
 
 
-
 ## Credits
 
 Thanks to Tom Whitwell for the amazing Music Thing Modular Workshop System.
 
 Thanks to Chris Johnson for the excellent Utility-Pair examples.
 
-Thanks to the discord community of computer card creators who inspired me to have a go at this.  
+Thanks to Dune Desormeaux, Brian Dorsey and the whole community of computer card creators whose work inspired me to have a go at this.  
