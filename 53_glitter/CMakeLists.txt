@@ -33,7 +33,6 @@ target_link_libraries(${PROJECT_NAME} pico_unique_id pico_stdlib hardware_dma ha
 pico_add_extra_outputs(${PROJECT_NAME})
 target_sources(${PROJECT_NAME} PUBLIC
 ${CMAKE_CURRENT_LIST_DIR}/main.cpp
-${CMAKE_CURRENT_LIST_DIR}/src/NotchFilter.cpp
 ${CMAKE_CURRENT_LIST_DIR}/src/Glitter.cpp
 ${CMAKE_CURRENT_LIST_DIR}/src/Utils.cpp
 )
