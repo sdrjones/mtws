@@ -62,12 +62,20 @@ private:
     static constexpr uint8_t kDontShiftBelow = 128;
 
     
+    // Pitch enum values are increment to the subsampled
+    // grain.currentIndex_ in order to achieve
+    // buffer sample increment.
+    //
+    // So at normal speed you add 256 to the currentIndex_
+    // to proceed to the next index in the buffer
     
     enum Pitch
     {
-        OctaveHigh,
-        Normal,
-        OctaveLow
+        OctaveHigh = 512,
+        FifthHigh = 384,
+        Normal = 256,
+        FifthLow = 192,
+        OctaveLow = 128
     };
 
     enum RecordState
@@ -90,12 +98,14 @@ private:
     {
         unsigned int startIndex_;
         unsigned int sizeSamples_;
+        // Lower 8 bits of currentIndex_ are subsample, 
+        // so actual sample to read from buffer is
+        // currentIndex_ >> 8
         unsigned int currentIndex_;
         unsigned int pan_;
         unsigned int level_;
         Pitch pitch_;
         Pitch intendedPitch_;
-        unsigned int subIndex_;
         unsigned int sleepCounter_;
     };
 

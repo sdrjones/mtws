@@ -103,7 +103,6 @@ Glitter::Glitter()
         grains_[g].pan_ = 128;
         grains_[g].pitch_ = Normal;
         grains_[g].intendedPitch_ = Normal;
-        grains_[g].subIndex_ = 0;
         grains_[g].sleepCounter_ = 400;
     }
 }
@@ -328,7 +327,7 @@ void Glitter::GrainProcess(int16_t &wetL, int16_t &wetR)
         }
 
         // Randomize grain start position and size if the grain has finished
-        if ((grain.currentIndex_ >= grain.sizeSamples_) && (g < kMaxGrains))
+        if (((grain.currentIndex_ >> 8) >= grain.sizeSamples_) && (g < kMaxGrains))
         {
             grain.currentIndex_ = 0;
             uint16_t repeatRnd = rnd12() >> 1;
@@ -400,8 +399,7 @@ void Glitter::GrainProcess(int16_t &wetL, int16_t &wetR)
                 uint32_t rndLevel = rnd12();
                 uint32_t pitchRand = rnd12();
 
-                grain.subIndex_ = 0;
-
+                
                 // Calculate the distance from the write pointer to figure out if we can play the grain
                 // at a different rate from the rate at which we are writing to audioBuf
                 uint16_t distBehind = distance_in_circular_buffer(grain.startIndex_, lastRecordedWriteI_, kBufSize);
@@ -414,7 +412,6 @@ void Glitter::GrainProcess(int16_t &wetL, int16_t &wetR)
                 else if ((pitchRand < (pitchChance_)) && ((distAhead >> 1) > grain.sizeSamples_))
                 {
                     grain.pitch_ = OctaveLow;
-                    grain.subIndex_ = 1;
                 }
                 else
                 {
@@ -459,7 +456,6 @@ void Glitter::GrainProcess(int16_t &wetL, int16_t &wetR)
                 else if ((grain.pitch_ == OctaveLow) && ((distAhead >> 1) > grain.sizeSamples_))
                 {
                     grain.pitch_ = OctaveLow;
-                    grain.subIndex_ = 1;
                 }
                 else
                 {
@@ -472,7 +468,7 @@ void Glitter::GrainProcess(int16_t &wetL, int16_t &wetR)
         int16_t grainSample = 0;
         if (grain.level_ > 0)
         {
-            unsigned int grainReadIndex = (grain.startIndex_ + grain.currentIndex_) % kBufSize;
+            unsigned int grainReadIndex = (grain.startIndex_ + (grain.currentIndex_ >> 8)) % kBufSize;
             grainSample = audioBuf_[grainReadIndex];
 
             // Apply level
@@ -483,7 +479,7 @@ void Glitter::GrainProcess(int16_t &wetL, int16_t &wetR)
             // As the hann window is symmetrical I'm using half of one to save
             // on space
 
-            uint32_t hannIndex = grain.currentIndex_;
+            uint32_t hannIndex = (grain.currentIndex_ >> 8);
             if (hannIndex > kHalfHannSize)
             {
                 hannIndex = grain.sizeSamples_ - hannIndex;
@@ -498,23 +494,11 @@ void Glitter::GrainProcess(int16_t &wetL, int16_t &wetR)
             wetL += static_cast<int16_t>(grainSample * kLeftGains[grain.pan_] >> 12);
             wetR += static_cast<int16_t>(grainSample * kLeftGains[255 - grain.pan_] >> 12);
         }
-        // Use grain sub index if necessary to pitch shift
-        if (grain.pitch_ == OctaveLow)
-        {
-            grain.subIndex_ = !grain.subIndex_;
-        }
 
-        if (grain.subIndex_ == 0)
-        {
-            grain.currentIndex_++;
+        grain.currentIndex_ += grain.pitch_;
 
-            if (grain.pitch_ == OctaveHigh)
-            {
-                grain.currentIndex_++;
-            }
-        }
 
-        if (grain.currentIndex_ >= grain.sizeSamples_)
+        if ((grain.currentIndex_  >> 8)  >= grain.sizeSamples_)
         {
             uint16_t sleepRand = rnd12() >> 1;
             if (sleepRand > sleepChance)
