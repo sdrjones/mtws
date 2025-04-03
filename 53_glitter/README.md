@@ -2,9 +2,13 @@
 
 A two second sampler with stereo granulated playback for the Music Thing Modular Workshop System Computer.
 
+## Video manual
+
+https://youtu.be/JW8Z_I-ub2A
+
 ## Note
 
-Glitter runs at a 200MHz clock speed. This is the maximum supported clock speed in Pico SDK 2.1.1 but in previous
+Glitter runs at a 192MHz clock speed. This is the maximum supported clock speed in Pico SDK 2.1.1 but in previous
 SDKs it would have been considered to be overclocked. If you want to run at a lower clock speed without clicks
 then you would need to reduce the maximum number of grains and rebuild the code
 
@@ -68,6 +72,10 @@ more positive voltage.
 
 **LEDs**: Each LED shows the current level of a grain's output. Six LEDs, six grains - nice!
 
+## FAQ
+
+- The switch is up but I can't hear audio going to my loop - what's wrong?
+  - Check that the X Knob is not fully clockwise. In this position the mix of audio going to the loop is 100% existing vs 0% new. The idea of coding it this way is that when the knob is rolled back from this position slightly you can get nice long fade outs of the loop.
 
 ## Credits
 
