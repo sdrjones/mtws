@@ -8,9 +8,9 @@ https://youtu.be/JW8Z_I-ub2A
 
 ## Note
 
-Glitter runs at a 192MHz clock speed. This is the maximum supported clock speed in Pico SDK 2.1.1 but in previous
-SDKs it would have been considered to be overclocked. If you want to run at a lower clock speed without clicks
-then you would need to reduce the maximum number of grains and rebuild the code
+Glitter runs at a 192MHz clock speed. This is slightly less than the maximum supported clock speed in Pico
+SDK 2.1.1 but in previous SDKs it would have been considered to be overclocked. If you want to run at a lower
+clock speed without clicks then you would need to reduce the maximum number of grains and rebuild the code.
 
 ## Summary
 
