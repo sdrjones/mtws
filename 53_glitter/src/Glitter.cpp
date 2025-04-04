@@ -293,6 +293,56 @@ void Glitter::RecordProcess(int16_t audioM)
     }
 }
 
+Glitter::Pitch Glitter::GeneratePitch(int startIndex, int grainSize)
+{
+    int outPitchIndex = 0;
+
+    // pitchChance_ is the last recorded
+    // xKnob in play mode
+    int octChance = pitchChance_;
+    int fifthChance = 0;
+
+    if (octChance > 2047)
+    {
+        fifthChance = octChance - 2047; 
+        octChance = 2047;
+    }
+
+    uint16_t octRand = rnd12();
+    uint16_t fifthRand = rnd12();
+
+    uint16_t distBehind = distance_in_circular_buffer(startIndex, lastRecordedWriteI_, kBufSize);
+    uint16_t distAhead = kBufSize - distBehind;
+
+    uint16_t factor = 0;
+    if ((distBehind >> 1) < grainSize)
+    {
+        //can't play high
+        // must play low or normal
+        factor = 0;
+    }
+    else if ((distAhead >> 1) < grainSize)
+    {
+        // must play high or normal
+        factor = 1;
+    }
+    else
+    {
+        // can play high or low
+        factor = octRand & 0x01;
+    }
+    
+    if (fifthRand < fifthChance)
+    {
+        outPitchIndex = factor + 3;
+    } 
+    else if (octRand < octChance)
+    {
+        outPitchIndex = factor + 1;
+    }
+    return pitchesLookup_[outPitchIndex];
+}
+
 void Glitter::GrainProcess(int16_t &wetL, int16_t &wetR)
 {
     uint32_t startRange = kBufSize;
@@ -399,7 +449,7 @@ void Glitter::GrainProcess(int16_t &wetL, int16_t &wetR)
                 uint32_t rndLevel = rnd12();
                 uint32_t pitchRand = rnd12();
 
-                
+#ifdef OLD_PITCH
                 // Calculate the distance from the write pointer to figure out if we can play the grain
                 // at a different rate from the rate at which we are writing to audioBuf
                 uint16_t distBehind = distance_in_circular_buffer(grain.startIndex_, lastRecordedWriteI_, kBufSize);
@@ -417,6 +467,9 @@ void Glitter::GrainProcess(int16_t &wetL, int16_t &wetR)
                 {
                     grain.pitch_ = Normal;
                 }
+#else
+                grain.pitch_ = GeneratePitch(grain.startIndex_, grain.sizeSamples_);
+#endif
 
                 grain.intendedPitch_ = grain.pitch_;
 
@@ -449,15 +502,14 @@ void Glitter::GrainProcess(int16_t &wetL, int16_t &wetR)
                 uint16_t distAhead = kBufSize - distBehind;
                 // Reset the pitch to its original selection
                 grain.pitch_ = grain.intendedPitch_;
-                if ((grain.pitch_ == OctaveHigh) && ((distBehind >> 1) > grain.sizeSamples_))
+
+                // Downgrade pitch to normal if it's going to trip over
+                // the write head
+                if ((grain.pitch_ > 256) && ((distBehind >> 1) < grain.sizeSamples_))
                 {
-                    grain.pitch_ = OctaveHigh;
+                    grain.pitch_ = Normal;
                 }
-                else if ((grain.pitch_ == OctaveLow) && ((distAhead >> 1) > grain.sizeSamples_))
-                {
-                    grain.pitch_ = OctaveLow;
-                }
-                else
+                else if ((grain.pitch_ < 256) && ((distAhead >> 1) < grain.sizeSamples_))
                 {
                     grain.pitch_ = Normal;
                 }

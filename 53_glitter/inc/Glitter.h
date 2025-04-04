@@ -61,8 +61,8 @@ private:
     static constexpr uint64_t kAbsMaxClockShift = 1;
     static constexpr uint8_t kDontShiftBelow = 128;
 
-    
-    // Pitch enum values are increment to the subsampled
+
+    // Pitch enum values represent increments to the subsampled
     // grain.currentIndex_ in order to achieve
     // buffer sample increment.
     //
@@ -77,6 +77,10 @@ private:
         FifthLow = 192,
         OctaveLow = 128
     };
+
+    inline constexpr static Pitch pitchesLookup_[] = {Normal, OctaveLow, OctaveHigh, FifthLow, FifthHigh};
+
+    Pitch __not_in_flash_func(GeneratePitch)(int startIndex, int size);
 
     enum RecordState
     {
@@ -109,7 +113,6 @@ private:
         unsigned int sleepCounter_;
     };
 
-
     int16_t audioBuf_[kBufSize];
     
     uint32_t writeI_ = 1;
@@ -129,8 +132,6 @@ private:
     uint32_t clockLed_ = 0;
     int32_t oldSignalLevel_ = 0;
     int16_t pitchChance_ = 0;
-
-    
 
     Switch curSwitch_;
     enum RecordState recordState_ = RecordStateOff;

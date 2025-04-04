@@ -42,10 +42,9 @@ NB. There is no dry or monitor output from glitter but you could patch that usin
 
 ---
 
-**X Knob (In Play)**: Modify the chance of grains playing back an octave higher or an octave lower. Ranges from
-zero chance (fully anti-clockwise) to maximum chance (fully clockwise). NB grains will only re-pitch 
-if they can safely do so without tripping over the write head, so at longer lengths there won't
-be as much re-pitching.
+**X Knob (In Play)**: Modify the chance of grains playing back at a different pitch. Chance of octave variations increases from fully anti-clockwise to half way. Chance of fifth variations increases from half way to fully clockwise.
+
+NB grains will only re-pitch if they can safely do so without tripping over the write head, so at longer lengths there won't be as much re-pitching.
 
 **X Knob (In Record)**: Adjust the mix between existing signal and new signal. Fully anti-clockwise is all
 new signal, fully clockwise is all old signal.
