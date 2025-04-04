@@ -315,10 +315,13 @@ Glitter::Pitch Glitter::GeneratePitch(int startIndex, int grainSize)
     uint16_t distAhead = kBufSize - distBehind;
 
     uint16_t factor = 0;
-    if ((distBehind >> 1) < grainSize)
+    if (distBehind < (grainSize >> 1))
     {
-        //can't play high
         // must play low or normal
+
+        // check if we must play normal
+        if ((distAhead >> 1) < grainSize) return Normal;
+
         factor = 0;
     }
     else if ((distAhead >> 1) < grainSize)
@@ -384,7 +387,7 @@ void Glitter::GrainProcess(int16_t &wetL, int16_t &wetR)
             if (repeatRnd < repeatChance)
             {
                 // Don't repeat - get a new set
-                // of arttributes
+                // of attributes
 
                 // put the grain's old level back
                 // in the headroom
@@ -505,7 +508,7 @@ void Glitter::GrainProcess(int16_t &wetL, int16_t &wetR)
 
                 // Downgrade pitch to normal if it's going to trip over
                 // the write head
-                if ((grain.pitch_ > 256) && ((distBehind >> 1) < grain.sizeSamples_))
+                if ((grain.pitch_ > 256) && (distBehind < (grain.sizeSamples_ >> 1)))
                 {
                     grain.pitch_ = Normal;
                 }

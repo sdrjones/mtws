@@ -6,6 +6,14 @@ A two second sampler with stereo granulated playback for the Music Thing Modular
 
 https://youtu.be/JW8Z_I-ub2A
 
+## Latest Release
+
+https://github.com/sdrjones/mtws/releases/tag/glitter_v0.1.0-beta
+
+## Source repo
+
+https://github.com/sdrjones/mtws/tree/main/53_glitter
+
 ## Note
 
 Glitter runs at a 192MHz clock speed. This is slightly less than the maximum supported clock speed in Pico
@@ -82,4 +90,4 @@ Thanks to Tom Whitwell for the amazing Music Thing Modular Workshop System.
 
 Thanks to Chris Johnson for the excellent Utility-Pair examples.
 
-Thanks to Dune Desormeaux, Brian Dorsey and the whole community of computer card creators whose work inspired me to have a go at this.  
+Thanks to Dune Desormeaux, Brian Dorsey and the whole community of computer card creators whose work inspired me to have a go at this.
