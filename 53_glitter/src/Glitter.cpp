@@ -311,7 +311,7 @@ Glitter::Pitch Glitter::GeneratePitch(int startIndex, int grainSize)
     uint16_t octRand = rnd12();
     uint16_t fifthRand = rnd12();
 
-    uint16_t distBehind = distance_in_circular_buffer(startIndex, lastRecordedWriteI_, kBufSize);
+    uint16_t distBehind = distance_in_circular_buffer(startIndex, writeI_, kBufSize);
     uint16_t distAhead = kBufSize - distBehind;
 
     uint16_t factor = 0;
@@ -501,7 +501,7 @@ void Glitter::GrainProcess(int16_t &wetL, int16_t &wetR)
                 // We want to repeat the grain but that might be problematic due to the
                 // changed write position so double check that and revert to pitch normal
                 // (where we will never overtake or get undertaken by the record head)
-                uint16_t distBehind = distance_in_circular_buffer(grain.startIndex_, lastRecordedWriteI_, kBufSize);
+                uint16_t distBehind = distance_in_circular_buffer(grain.startIndex_, writeI_, kBufSize);
                 uint16_t distAhead = kBufSize - distBehind;
                 // Reset the pitch to its original selection
                 grain.pitch_ = grain.intendedPitch_;
