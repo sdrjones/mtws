@@ -1,0 +1,42 @@
+# Build artifacts
+/build/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+*.o
+*.obj
+*.elf
+*.bin
+*.hex
+*.uf2
+*.dis
+*.map
+*.a
+*.so
+*.d
+
+# VS Code settings
+.vscode/
+.github/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Generated files
+*.log
+*.pyc
+__pycache__/
+
+# Pico SDK generated
+/generated/
+
+# Ignore user-specific files
+*.swp
+*.swo
+*.swn
+*~
+
+# Ignore Copilot instructions (if not to be tracked)
+# .github/copilot-instructions.md
