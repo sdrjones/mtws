@@ -27,6 +27,7 @@
 #include "Utils.h"
 #include "HannWindow.h"
 #include "PowerPan.h"
+#include "Notes.h"
 
 // Some Random functions from Chris J
 
@@ -93,6 +94,8 @@ Shuffle::Shuffle()
     maxClockShiftDown_ = 1;
     maxClockShiftUp_ = 1;
     pitchChance_ = 0;
+    notesList_ = kBflatMidiNotes;
+    notesListLength_ = kBflatMidiNotesLength;
 
     for (int g = 0; g < kMaxGrains; ++g)
     {
@@ -105,6 +108,7 @@ Shuffle::Shuffle()
         grains_[g].intendedPitch_ = Normal;
         grains_[g].sleepCounter_ = 400;
     }
+
 }
 
 void Shuffle::UpdateClock()
@@ -577,23 +581,46 @@ void Shuffle::ProcessSample()
         writeI_ = (writeI_ + 1) % bufSize_;
         readI_ = (readI_ + 1) % bufSize_;
 
-        if (writeI_ % samplesPerPulse_ < 50)
+        uint32_t pulseOffset = writeI_ % (samplesPerPulse_);
+        if (pulseOffset < 50)
         {
             LedBrightness(5, 4095);
+            PulseOut1(true);
+            if (pulseOffset == 0)
+            {
+                // Trigger a MIDI note on each 1/4 pulse
+                uint16_t noteIndex = rnd8() % notesListLength_;
+                uint8_t midiNote = notesList_[noteIndex];
+                CVOut1MIDINote(midiNote);                
+            }
+
         }
         else
         {
             LedBrightness(5, 0);
+            PulseOut1(false);
         }
 
-        if (writeI_ % (samplesPerPulse_ * 4) < 50)
+        uint32_t barOffset = writeI_ % (samplesPerPulse_ * 4);
+        if (barOffset < 50)
         {
             LedBrightness(4, 4095);
+            PulseOut2(true);
+            if (barOffset == 0)
+            {
+                // Trigger a MIDI note on each 1/4 pulse
+                uint16_t noteIndex = rnd8() % notesListLength_;
+                uint8_t midiNote = notesList_[noteIndex];
+                CVOut2MIDINote(midiNote);                
+            }
         }
         else
         {
+            PulseOut2(false);
             LedBrightness(4, 0);
         }
+
+    
 
 
         AudioOut1(mixOutL);

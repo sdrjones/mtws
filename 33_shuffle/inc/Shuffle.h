@@ -25,7 +25,7 @@
 
 #define COMPUTERCARD_NOIMPL
 #include "ComputerCard.h"
-
+#include <vector>
 
 class Shuffle : public ComputerCard
 {
@@ -61,7 +61,7 @@ private:
     static constexpr uint64_t kClockChangeThreshold = 48; // Ignore clock jitter lower than this
     static constexpr uint64_t kAbsMaxClockShift = 1;
     static constexpr uint8_t kDontShiftBelow = 128;
-    static constexpr uint8_t kDefaultPulsesInBuffer = 8;
+    static constexpr uint8_t kDefaultPulsesInBuffer = 4;
     static constexpr uint64_t kDefaultSamplesPerPulse = kMaxBufSize / kDefaultPulsesInBuffer;
     
 
@@ -138,6 +138,8 @@ private:
     int16_t pitchChance_ = 0;
     uint32_t bufSize_ = kMaxBufSize;
     uint32_t pulsesInBuffer_ = kDefaultPulsesInBuffer;
+    const uint8_t* notesList_;
+    uint16_t notesListLength_;
 
     Switch curSwitch_;
     enum RecordState recordState_ = RecordStateOff;
