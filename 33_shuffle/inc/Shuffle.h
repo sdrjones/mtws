@@ -62,6 +62,7 @@ private:
     static constexpr uint64_t kAbsMaxClockShift = 1;
     static constexpr uint8_t kDontShiftBelow = 128;
     static constexpr uint8_t kDefaultPulsesInBuffer = 8;
+    static constexpr uint64_t kDefaultSamplesPerPulse = kMaxBufSize / kDefaultPulsesInBuffer;
     
 
 
@@ -126,7 +127,7 @@ private:
     uint32_t startupCounter_ = 400;
     uint16_t headRoom_ = 4096; // The "level" available for all grains
     uint64_t clockCount_ = 0; // samples between pulse 1 rising
-    uint64_t samplesPerPulse_ = 0; 
+    uint64_t samplesPerPulse_ = kDefaultSamplesPerPulse; 
     uint64_t samplesMultiplier_ = 0;
     uint64_t minClockedBeat_;
     enum ClockState clockState_ = ClockOff;

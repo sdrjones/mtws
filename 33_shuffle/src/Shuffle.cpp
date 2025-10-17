@@ -86,7 +86,7 @@ Shuffle::Shuffle()
     recordState_ = RecordStateOff;
     curSwitch_ = SwitchVal();
     clockCount_ = 0;
-    samplesPerPulse_ = 0;
+    samplesPerPulse_ = kDefaultSamplesPerPulse;
     samplesMultiplier_ = 0;
     clockLed_ = 0;
     clockState_ = ClockOff;
@@ -576,6 +576,25 @@ void Shuffle::ProcessSample()
         // Update the read/write heads
         writeI_ = (writeI_ + 1) % bufSize_;
         readI_ = (readI_ + 1) % bufSize_;
+
+        if (writeI_ % samplesPerPulse_ < 50)
+        {
+            LedBrightness(5, 4095);
+        }
+        else
+        {
+            LedBrightness(5, 0);
+        }
+
+        if (writeI_ % (samplesPerPulse_ * 4) < 50)
+        {
+            LedBrightness(4, 4095);
+        }
+        else
+        {
+            LedBrightness(4, 0);
+        }
+
 
         AudioOut1(mixOutL);
         AudioOut2(mixOutR);
