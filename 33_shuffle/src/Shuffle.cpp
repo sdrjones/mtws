@@ -389,11 +389,17 @@ void Shuffle::GrainProcess(int16_t &wetL, int16_t &wetR)
                     maxSize = kMinGrainSize;
                 }
 
+                // Map yKnob_ to powers of 2 (1, 2, 4, 8, 16, 32, 64, 128)
+                // More efficient than if-else chain
+                uint32_t knobLevel = (yKnob_ + 256) >> 9; // Divide by 512 with rounding
+                if (knobLevel > 7) knobLevel = 7;
+                pulsesInBuffer_ = 1 << knobLevel;
+
                 uint64_t nextSize = 0;
                 if (clockState_ != ClockRunning)
                 {
                     //nextSize = (rndi32() % (maxSize - kMinGrainSize)) + kMinGrainSize;
-                    nextSize = kMaxBufSize / kDefaultPulsesInBuffer;
+                    nextSize = kMaxBufSize / pulsesInBuffer_;
                 }
                 else
                 {
@@ -591,7 +597,8 @@ void Shuffle::ProcessSample()
                 // Trigger a MIDI note on each 1/4 pulse
                 uint16_t noteIndex = rnd8() % notesListLength_;
                 uint8_t midiNote = notesList_[noteIndex];
-                CVOut1MIDINote(midiNote);                
+                CVOut1MIDINote(midiNote);
+                //CVOut1MIDINote(notesList_[0]);                
             }
 
         }
@@ -611,7 +618,8 @@ void Shuffle::ProcessSample()
                 // Trigger a MIDI note on each 1/4 pulse
                 uint16_t noteIndex = rnd8() % notesListLength_;
                 uint8_t midiNote = notesList_[noteIndex];
-                CVOut2MIDINote(midiNote);                
+                CVOut2MIDINote(midiNote);
+                //CVOut2MIDINote(notesList_[0]);                
             }
         }
         else
