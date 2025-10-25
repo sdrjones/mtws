@@ -399,12 +399,20 @@ void Shuffle::GrainProcess(int16_t &wetL, int16_t &wetR)
                 if (clockState_ != ClockRunning)
                 {
                     //nextSize = (rndi32() % (maxSize - kMinGrainSize)) + kMinGrainSize;
-                    nextSize = kMaxBufSize / pulsesInBuffer_;
+                    //nextSize = kMaxBufSize / pulsesInBuffer_;
+                    nextSize = kMaxBufSize >> knobLevel;
                 }
                 else
                 {
                     nextSize = samplesPerPulse_;
-                    
+                    if (nextSize > maxSize)
+                    {
+                        nextSize = maxSize;
+                    }
+                    else if (nextSize < kMinGrainSize)
+                    {
+                        nextSize = kMinGrainSize;
+                    }
                 }
 
 
@@ -488,11 +496,19 @@ void Shuffle::GrainProcess(int16_t &wetL, int16_t &wetR)
             // using a Hann window lookup table
             // As the hann window is symmetrical I'm using half of one to save
             // on space
+            // Step value allows you to scale the hann window
+            // according to the number of pulses in the buffer. This is needed when
+            // the number of pulses in the buffer leads to a grain size smaller
+            // than the hann window size
 
-            uint32_t hannIndex = (grain.currentIndex_ >> 8);
+            uint32_t stepValue = pulsesInBuffer_ >> 6;
+            uint32_t hannIndex = (grain.currentIndex_ >> (8 - stepValue));
+
+
+
             if (hannIndex > kHalfHannSize)
             {
-                hannIndex = grain.sizeSamples_ - hannIndex;
+                hannIndex = (grain.sizeSamples_ << stepValue) - hannIndex;
             }
             if (hannIndex < kHalfHannSize)
             {
