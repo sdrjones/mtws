@@ -140,6 +140,7 @@ private:
     uint32_t pulsesInBuffer_ = kDefaultPulsesInBuffer;
     const uint8_t* notesList_;
     uint16_t notesListLength_;
+    uint32_t curSliceSize_ = samplesPerPulse_;
 
     Switch curSwitch_;
     enum RecordState recordState_ = RecordStateOff;

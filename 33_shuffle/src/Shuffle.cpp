@@ -280,15 +280,20 @@ Shuffle::Pitch Shuffle::GeneratePitch(int startIndex, int grainSize)
     // xKnob in play mode
     int octChance = pitchChance_;
     int fifthChance = 0;
-
+    #define PLAY_FIFTHS
+    #ifdef PLAY_FIFTHS
     if (octChance > 2047)
     {
         fifthChance = octChance - 2047; 
         octChance = 2047;
     }
+    uint16_t fifthRand = rnd12();
+    #else
+    uint16_t fifthRand = 4096; // disable fifths
+    #endif
 
     uint16_t octRand = rnd12();
-    uint16_t fifthRand = rnd12();
+
 
     uint16_t distBehind = distance_in_circular_buffer(startIndex, writeI_, bufSize_);
     uint16_t distAhead = bufSize_ - distBehind;
@@ -364,6 +369,10 @@ void Shuffle::GrainProcess(int16_t &wetL, int16_t &wetR)
         // Randomize grain start position and size if the grain has finished
         if (((grain.currentIndex_ >> 8) >= grain.sizeSamples_) && (g < kMaxGrains))
         {
+            if ((writeI_ - 1) % curSliceSize_)
+            {
+                continue;
+            }
             grain.currentIndex_ = 0;
             //uint16_t repeatRnd = rnd12() >> 1;
             // no repeats for now
@@ -401,6 +410,7 @@ void Shuffle::GrainProcess(int16_t &wetL, int16_t &wetR)
                     //nextSize = (rndi32() % (maxSize - kMinGrainSize)) + kMinGrainSize;
                     //nextSize = kMaxBufSize / pulsesInBuffer_;
                     nextSize = kMaxBufSize >> knobLevel;
+
                 }
                 else
                 {
@@ -414,7 +424,7 @@ void Shuffle::GrainProcess(int16_t &wetL, int16_t &wetR)
                         nextSize = kMinGrainSize;
                     }
                 }
-
+                curSliceSize_ = nextSize;
 
                 pulsesBehind = rndi32() % pulsesInBuffer_;
 
@@ -523,7 +533,7 @@ void Shuffle::GrainProcess(int16_t &wetL, int16_t &wetR)
 
         grain.currentIndex_ += grain.pitch_;
 
-
+#ifdef SLEEP_CODE
         if ((grain.currentIndex_  >> 8)  >= grain.sizeSamples_)
         {
             uint16_t sleepRand = rnd12() >> 1;
@@ -537,7 +547,7 @@ void Shuffle::GrainProcess(int16_t &wetL, int16_t &wetR)
                 grain.sleepCounter_ = sleepSize;
             }
         }
-
+#endif
         // Might need to change this if pulses behind is
         // always greater than 6
         if (pulsesBehind < 6)
