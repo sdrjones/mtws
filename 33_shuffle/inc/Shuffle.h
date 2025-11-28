@@ -41,6 +41,9 @@ private:
     void ReadAudio(void);
     void ReadCV(void);
     void __not_in_flash_func(UpdateClock)(void);
+    void __not_in_flash_func(UpdateTap)(void);
+    bool __not_in_flash_func(ClockEvent)(void);
+    
     void __not_in_flash_func(GrainProcess)(int16_t& wetL, int16_t& wetR);
     void __not_in_flash_func(RecordProcess)(int16_t audioM);
     
@@ -57,7 +60,8 @@ private:
     static constexpr uint32_t kGrainSilenceThreshold = 16;
     static constexpr uint16_t kDefaultSleepChance = 1500; // Lower = more sleep, 0-2000
     static constexpr uint16_t kDefaultRepeatChance = 2000; // Lower = more repeats, 0-2000
-    static constexpr uint64_t kMaxSamplesBetweenClocks = kMaxBufSize / 2;
+    static constexpr uint64_t kMaxSamplesBetweenClocks = kMaxBufSize;
+    static constexpr uint64_t kMinSamplesBetweenClocks = 4800; // 10Hz at 48kHz sample rate
     static constexpr uint64_t kClockChangeThreshold = 48; // Ignore clock jitter lower than this
     static constexpr uint64_t kAbsMaxClockShift = 1;
     static constexpr uint8_t kDontShiftBelow = 128;
@@ -141,8 +145,10 @@ private:
     const uint8_t* notesList_;
     uint16_t notesListLength_;
     uint32_t curSliceSize_ = samplesPerPulse_;
-
+    uint16_t repeatChance_ = kDefaultRepeatChance;
+   
     Switch curSwitch_;
+    Switch lastSwitch_;
     enum RecordState recordState_ = RecordStateOff;
     uint16_t recordStateHannIndex_ = 0;
 

@@ -111,6 +111,22 @@ Shuffle::Shuffle()
 
 }
 
+bool Shuffle::ClockEvent()
+{
+    Switch lastSwitch = lastSwitch_;;
+    lastSwitch_ = curSwitch_;
+    if (Connected(Input::Pulse1))
+    {
+        return PulseIn1RisingEdge();
+    }
+    else
+    {
+        return ((curSwitch_ == Switch::Down) && (lastSwitch != Switch::Down));
+    }    
+
+    return false;
+}
+
 void Shuffle::UpdateClock()
 {
     switch (clockState_)
@@ -118,13 +134,13 @@ void Shuffle::UpdateClock()
     case ClockOff:
     {
         clockState_ = ClockWaitingFirstPulse;
-        samplesPerPulse_ = 0;
+        //samplesPerPulse_ = 0;
     }
     break;
 
     case ClockWaitingFirstPulse:
     {
-        if (PulseIn1RisingEdge())
+        if (ClockEvent())
         {
             clockCount_ = 0;
             clockState_ = ClockWaitingSecondPulse;
@@ -136,7 +152,7 @@ void Shuffle::UpdateClock()
     case ClockRunning:
     {
         clockCount_++;
-        if (PulseIn1RisingEdge())
+        if (ClockEvent())
         {
             if (abs(clockCount_ - samplesPerPulse_) > kClockChangeThreshold)
             {
@@ -173,9 +189,9 @@ void Shuffle::RecordProcess(int16_t audioM)
 
     bool shouldRecord = false;
 
-    // Currently Middle is don't record,
-    // either up or down is record
-    if (curSwitch_ != Switch::Middle)
+    // Currently Middle and down is,
+    // record
+    if (curSwitch_ != Switch::Up)
     {
         shouldRecord = true;
         if (oldSignalLevel_ < xKnob_)
@@ -374,10 +390,11 @@ void Shuffle::GrainProcess(int16_t &wetL, int16_t &wetR)
                 continue;
             }
             grain.currentIndex_ = 0;
-            //uint16_t repeatRnd = rnd12() >> 1;
+            uint16_t repeatRnd = rnd12() >> 1;
             // no repeats for now
-            uint16_t repeatRnd = 0;
-            if (repeatRnd < repeatChance)
+            //uint16_t repeatRnd = 0;
+            //repeatChance = 1024;
+            if (repeatRnd < repeatChance_)
             {
                 // Don't repeat - get a new set
                 // of attributes
@@ -578,14 +595,10 @@ void Shuffle::ProcessSample()
             curSwitch_ = SwitchVal();
         }
 
-        if (Connected(Input::Pulse1))
-        {
+        //if (Connected(Input::Pulse1))
+        //{
             UpdateClock();
-        }
-        else
-        {
-            clockState_ = ClockOff;
-        }
+        //}
 
         // The audio buffer is mono = so mix the inputs
         // and shift if both are connected
@@ -614,6 +627,18 @@ void Shuffle::ProcessSample()
         readI_ = (readI_ + 1) % bufSize_;
 
         uint32_t pulseOffset = writeI_ % (samplesPerPulse_);
+
+
+        if (curSwitch_ == Switch::Middle)
+        {
+            LedBrightness(2, 2048);
+            LedBrightness(3, 0);
+        }
+        else{
+            LedBrightness(2, 0);
+            LedBrightness(3, 2048);
+        }
+
         if (pulseOffset < 50)
         {
             LedBrightness(5, 4095);
@@ -641,11 +666,13 @@ void Shuffle::ProcessSample()
             PulseOut2(true);
             if (barOffset == 0)
             {
-                // Trigger a MIDI note on each 1/4 pulse
+                // Trigger a MIDI note on each bar
                 uint16_t noteIndex = rnd8() % notesListLength_;
                 uint8_t midiNote = notesList_[noteIndex];
                 CVOut2MIDINote(midiNote);
-                //CVOut2MIDINote(notesList_[0]);                
+                //CVOut2MIDINote(notesList_[0]);
+                
+                repeatChance_ = rnd12() >> 1;
             }
         }
         else
