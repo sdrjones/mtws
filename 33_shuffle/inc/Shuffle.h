@@ -43,6 +43,7 @@ private:
     void __not_in_flash_func(UpdateClock)(void);
     void __not_in_flash_func(UpdateTap)(void);
     bool __not_in_flash_func(ClockEvent)(void);
+    void __not_in_flash_func(DisplayMacroMode)(uint16_t mode);
     
     void __not_in_flash_func(GrainProcess)(int16_t& wetL, int16_t& wetR);
     void __not_in_flash_func(RecordProcess)(int16_t audioM);
@@ -119,6 +120,7 @@ private:
         Pitch pitch_;
         Pitch intendedPitch_;
         unsigned int sleepCounter_;
+        unsigned int repeatCounter_;
     };
 
     int16_t audioBuf_[kMaxBufSize];
@@ -146,6 +148,9 @@ private:
     uint16_t notesListLength_;
     uint32_t curSliceSize_ = samplesPerPulse_;
     uint16_t repeatChance_ = kDefaultRepeatChance;
+    uint16_t macroMode_ = 0;
+    uint16_t timeSinceMacroChange_ = 0;
+    uint16_t lastMacroMode_ = 0;
    
     Switch curSwitch_;
     Switch lastSwitch_;

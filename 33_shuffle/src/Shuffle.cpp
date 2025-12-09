@@ -107,6 +107,7 @@ Shuffle::Shuffle()
         grains_[g].pitch_ = Normal;
         grains_[g].intendedPitch_ = Normal;
         grains_[g].sleepCounter_ = 400;
+        grains_[g].repeatCounter_ = 0;
     }
 
 }
@@ -390,11 +391,11 @@ void Shuffle::GrainProcess(int16_t &wetL, int16_t &wetR)
                 continue;
             }
             grain.currentIndex_ = 0;
-            uint16_t repeatRnd = rnd12() >> 1;
+            //uint16_t repeatRnd = rnd12() >> 1;
             // no repeats for now
             //uint16_t repeatRnd = 0;
             //repeatChance = 1024;
-            if (repeatRnd < repeatChance_)
+            if (grain.repeatCounter_ == 0)
             {
                 // Don't repeat - get a new set
                 // of attributes
@@ -506,6 +507,11 @@ void Shuffle::GrainProcess(int16_t &wetL, int16_t &wetR)
                 {
                     grain.pitch_ = Normal;
                 }
+
+                if (grain.repeatCounter_ > 0)
+                {
+                    grain.repeatCounter_--;     
+                }
             }
         }
 
@@ -567,11 +573,32 @@ void Shuffle::GrainProcess(int16_t &wetL, int16_t &wetR)
 #endif
         // Might need to change this if pulses behind is
         // always greater than 6
-        if (pulsesBehind < 6)
+        // if (pulsesBehind < 6)
+        // {
+        //     LedBrightness(pulsesBehind, abs(grainSample) << 2);
+        // }
+    }
+}
+
+void Shuffle::DisplayMacroMode(uint16_t mode)
+{
+    // Display the macro mode on leds 0-3
+    for (uint16_t i = 0; i < 4; ++i)
+    {
+        if (mode & (1 << i))
         {
-            LedBrightness(pulsesBehind, abs(grainSample) << 2);
+            LedBrightness(i, 2048);
+        }
+        else
+        {
+            LedBrightness(i, 0);
         }
     }
+
+    // if (timeSinceMacroChange_ > 32768)
+    // {
+    //     timeSinceMacroChange_--;
+    // }
 }
 
 void Shuffle::ProcessSample()
@@ -617,8 +644,20 @@ void Shuffle::ProcessSample()
         // Right shift recorded signal volume by more in order to match the perceived
         // level of the wet signal
 
+        #ifdef MAIN_KNOB_IS_MIX
         int16_t mixOutL = (audioBuf_[readI_] * (mainKnob_) >> 13) + (wetL * (4095 - (mainKnob_)) >> 12);
         int16_t mixOutR = (audioBuf_[readI_] * (mainKnob_) >> 13) + (wetR * (4095 - (mainKnob_)) >> 12);
+        #else
+        int16_t mixOutL = wetL;
+        int16_t mixOutR = wetR;
+        macroMode_ = mainKnob_ >> 8;
+        DisplayMacroMode(macroMode_);
+        if (macroMode_ != lastMacroMode_)
+        {
+            timeSinceMacroChange_ = 4095 << 4;
+            lastMacroMode_ = macroMode_;
+        }
+        #endif
 
         RecordProcess(audioM);
 
@@ -629,15 +668,15 @@ void Shuffle::ProcessSample()
         uint32_t pulseOffset = writeI_ % (samplesPerPulse_);
 
 
-        if (curSwitch_ == Switch::Middle)
-        {
-            LedBrightness(2, 2048);
-            LedBrightness(3, 0);
-        }
-        else{
-            LedBrightness(2, 0);
-            LedBrightness(3, 2048);
-        }
+        // if (curSwitch_ == Switch::Middle)
+        // {
+        //     LedBrightness(2, 2048);
+        //     LedBrightness(3, 0);
+        // }
+        // else{
+        //     LedBrightness(2, 0);
+        //     LedBrightness(3, 2048);
+        // }
 
         if (pulseOffset < 50)
         {
