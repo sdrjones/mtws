@@ -678,9 +678,8 @@ void Shuffle::ProcessSample()
         //     LedBrightness(3, 2048);
         // }
 
-        if (pulseOffset < 50)
+        if (pulseOffset < (samplesPerPulse_ >> 1))
         {
-            LedBrightness(5, 4095);
             PulseOut1(true);
             if (pulseOffset == 0)
             {
@@ -691,6 +690,15 @@ void Shuffle::ProcessSample()
                 //CVOut1MIDINote(notesList_[0]);                
             }
 
+            if (pulseOffset < 50)
+            {
+                LedBrightness(5, 4095);
+            }
+            else
+            {
+                LedBrightness(5, 0);
+            }
+
         }
         else
         {
@@ -698,10 +706,19 @@ void Shuffle::ProcessSample()
             PulseOut1(false);
         }
 
+    
+
         uint32_t barOffset = writeI_ % (samplesPerPulse_ * 4);
-        if (barOffset < 50)
+        if (barOffset < (samplesPerPulse_ * 2))
         {
-            LedBrightness(4, 4095);
+            if (barOffset < 50 )
+            {
+                LedBrightness(4, 4095);
+            }
+            else
+            {
+                LedBrightness(4, 0);
+            }
             PulseOut2(true);
             if (barOffset == 0)
             {
